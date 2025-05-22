@@ -45,6 +45,7 @@ Goal: Enable users to securely upload video files.
 - Backend Upload Service: Develop a microservice (e.g., in Python/Flask, Go, Node.js) that handles upload requests.
 - Cloud Storage Integration: Implement logic to interact with chosen blob storage (e.g., AWS S3 SDK, Azure Blob Storage SDK, Google Cloud Storage client library).
 - Upload Metadata: Upload the video's metadata in the database (e.g.video title, description, available resolutions, thumbnail URLs).
+  
 Exploration (Research & Design):
 - Direct Upload vs. Proxy Upload: Investigate pros and cons of direct-to-storage upload (e.g., signed URLs for S3/GCS) versus proxying uploads through an API Gateway/service.
 - Signed URL Generation (if direct upload): Implement endpoint to generate pre-signed URLs for client-side direct uploads.
@@ -70,7 +71,7 @@ Goal: Allow users to find videos based on keywords and metadata.
 - Metadata Integration: Ensure the video processing service pushes relevant metadata to the search index.
   
 Exploration (Research & Design):
--Search Technologies: Research full-text search engines (Elasticsearch, Apache Solr) or managed cloud search services (AWS OpenSearch, Azure Cognitive Search, Google Cloud Search).
+- Search Technologies: Research full-text search engines (Elasticsearch, Apache Solr) or managed cloud search services (AWS OpenSearch, Azure Cognitive Search, Google Cloud Search).
 
 ### 4. User Management (Basic)
 Goal: Allow users to register, log in, and manage their uploaded videos.
