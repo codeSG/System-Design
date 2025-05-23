@@ -13,27 +13,26 @@ To collaboratively design, implement, and deploy a high-level distributed system
 
 https://youtu.be/tWVDg4pVQEk
 
-## Project Milestones/Phases
-Consider a phased/parallel approach to build incrementally:
+## Project FUnctionalities:
 
-### Milestone 1: Core Upload & Storage (MVP)
+### Core Upload & Storage (MVP)
 - Basic user authentication.
 - Video upload to blob storage (raw).
 - Basic metadata storage.
 
-### Milestone 2: Basic Viewing & Processing
+### Basic Viewing & Processing
 - Trigger for async processing.
 - Video processing/transcoding to a single format.
 - Basic video playback from processed storage.
 
-### Milestone 3: Search & Discovery
+### Search & Discovery
 - Implementing search API and basic frontend search.
 - Populating search index with metadata.
   
-### Milestone 4: User Management
+### User Management
 - Implement User login signup to provide access to system.
   
-### Milestone 5: Enhancements & Scalability
+### Enhancements & Scalability
 - CDN integration for processed videos.
 - Load Balancers and API GAteways
 - Caching integration (Redis) for thumbnails/metadata.
@@ -92,7 +91,6 @@ Goal: How to support scaling and improve performance.
 ## Extras
 - Deployment of services using Kubernates, Docker etc.
 - Log Aggregation: How to collect logs from all services into a central location.
-
 
 
 
