@@ -29,20 +29,27 @@ public class RefreshToken {
     @Column(nullable = false , unique = true)
     private String token;
 
-    @Column(nullable = false)
-    private String family;
+//    @Column(nullable = true)
+//    private String family;
 
-    @Column(nullable = false)
-    private Boolean used = false;
+//    @Column(nullable = false)
+//    private Boolean used = false;
 
     @Column(nullable = false)
     private Instant expiresAt;
 
-    @Column(nullable = false)
-    private Instant absoluteExpiry;
+//    @Column(nullable = false)
+//    private Instant absoluteExpiry;
 
     private String userAgent;
 
     private String userIp;
+
+    //cosntructor
+    public RefreshToken(User user, String token, Instant expiresAt) {
+        this.user = user;
+        this.token = token;
+        this.expiresAt = expiresAt;
+    }
     
 }
