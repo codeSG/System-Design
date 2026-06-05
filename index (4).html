@@ -1,0 +1,3400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dev Notes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Sora:wght@400;500;600&display=swap" rel="stylesheet" />
+  <!-- ================================================================
+    REGION: STYLES
+    Safe to edit: only if changing global design tokens or layout.
+    Sub-sections are labelled inside.
+  ================================================================ -->
+  <style>
+
+    /* ── RESET ────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── DESIGN TOKENS (colours · fonts · spacing) ── */
+    :root {
+      --bg:     #0e1117;
+      --bg2:    #161b24;
+      --bg3:    #1c2333;
+      --border: #252e40;
+      --bord2:  #3a4560;
+      --text:   #e2e8f0;
+      --text2:  #8b9ab5;
+      --text3:  #4a5a7a;
+      --accent: #4f9cf9;
+      --green:  #34d399;
+      --red:    #f87171;
+      --amber:  #fbbf24;
+      --purple: #a78bfa;
+      --teal:   #2dd4bf;
+      --mono:   'IBM Plex Mono', monospace;
+      --sans:   'Sora', sans-serif;
+      --rad:    10px;
+    }
+
+    /* ── BODY LAYOUT ─────────────────────────────── */
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      min-height: 100vh;
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    /* ═══════════════════════════
+       SIDEBAR
+    ═══════════════════════════ */
+    .sidebar {
+      width: 252px;
+      min-width: 252px;
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      height: 100vh;
+      position: sticky;
+      top: 0;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-logo {
+      padding: 20px 16px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .logo-mark {
+      width: 30px; height: 30px;
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--mono); font-size: 14px; font-weight: 500;
+      color: #fff; flex-shrink: 0;
+    }
+    .logo-text .top { font-size: 13px; font-weight: 600; color: var(--text); }
+    .logo-text .bot { font-family: var(--mono); font-size: 10px; color: var(--text3); letter-spacing: 0.06em; }
+
+    .nav { padding: 8px 6px 48px; }
+
+    /* ── DOMAIN (top-level, e.g. "System Design") ── */
+    .domain { margin-bottom: 2px; }
+
+    .domain-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 9px 10px;
+      border-radius: 8px;
+      cursor: pointer; user-select: none;
+      color: var(--text2);
+      font-size: 13px; font-weight: 600;
+      transition: background 0.13s, color 0.13s;
+      border: none; background: none; width: 100%; text-align: left;
+    }
+    .domain-header:hover { background: var(--bg3); color: var(--text); }
+    .domain-header.open  { color: var(--text); }
+
+    .domain-left { display: flex; align-items: center; gap: 9px; }
+
+    .domain-icon {
+      width: 22px; height: 22px; border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; flex-shrink: 0;
+    }
+
+    .d-chevron {
+      width: 13px; height: 13px; flex-shrink: 0;
+      transition: transform 0.2s; opacity: 0.35;
+      color: var(--text2);
+    }
+    .domain-header.open .d-chevron { transform: rotate(90deg); opacity: 0.6; }
+
+    .domain-body { display: none; padding: 2px 0 4px; }
+    .domain-body.open { display: block; }
+
+    /* ── CATEGORY (second level, e.g. "Authentication") ── */
+    .category { margin: 1px 0; }
+
+    .cat-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 6px 10px 6px 20px;
+      border-radius: 6px;
+      cursor: pointer; user-select: none;
+      color: var(--text3);
+      font-family: var(--mono); font-size: 10px; font-weight: 500;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      transition: background 0.12s, color 0.12s;
+      border: none; background: none; width: 100%; text-align: left;
+    }
+    .cat-header:hover { color: var(--text2); }
+    .cat-header.open  { color: var(--text2); }
+
+    .c-chevron {
+      width: 11px; height: 11px; flex-shrink: 0;
+      transition: transform 0.18s; opacity: 0.4;
+    }
+    .cat-header.open .c-chevron { transform: rotate(90deg); }
+
+    .cat-body { display: none; }
+    .cat-body.open { display: block; }
+
+    /* ── NAV ITEM (leaf page) ── */
+    .nav-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 10px 6px 30px;
+      border-radius: 6px;
+      cursor: pointer;
+      color: var(--text3); font-size: 13px;
+      transition: background 0.1s, color 0.1s;
+      border: none; background: none; width: 100%; text-align: left;
+    }
+    .nav-item:hover { background: var(--bg3); color: var(--text2); }
+    .nav-item.active { background: rgba(79,156,249,0.1); color: var(--accent); font-weight: 500; }
+    .pip { width: 4px; height: 4px; border-radius: 50%; background: currentColor; opacity: 0.5; flex-shrink: 0; }
+    .nav-item.active .pip { opacity: 1; }
+    .soon { font-size: 9px; font-family: var(--mono); opacity: 0.35; margin-left: 2px; }
+
+    /* ═══════════════════════════
+       MAIN CONTENT
+    ═══════════════════════════ */
+    .main {
+      flex: 1; overflow-y: auto;
+      padding: 48px 60px;
+      max-width: 860px;
+    }
+
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* breadcrumb */
+    .breadcrumb {
+      display: flex; align-items: center; gap: 6px;
+      font-family: var(--mono); font-size: 11px; color: var(--text3);
+      margin-bottom: 10px;
+    }
+    /* ── MAIN CONTENT · TYPOGRAPHY ────────────────── */
+    .breadcrumb span { color: var(--text3); }
+    .breadcrumb .sep { opacity: 0.4; }
+
+    .page-title { font-size: 28px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+    .page-desc  { color: var(--text2); font-size: 14px; margin-bottom: 36px; font-family: var(--mono); }
+
+    h2 { font-size: 18px; font-weight: 600; color: var(--text); margin: 40px 0 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+    h3 { font-size: 11px; font-weight: 500; color: var(--accent); margin: 26px 0 10px; font-family: var(--mono); letter-spacing: 0.1em; text-transform: uppercase; }
+    p  { color: var(--text2); margin-bottom: 14px; line-height: 1.75; }
+    strong { color: var(--text); font-weight: 500; }
+
+    /* ── CODE BLOCKS ────────────────────────────── */
+    code {
+      font-family: var(--mono); font-size: 12.5px;
+      background: var(--bg3); border: 1px solid var(--border);
+      border-radius: 5px; padding: 2px 7px; color: var(--teal);
+    }
+
+    pre {
+      font-family: var(--mono); font-size: 13px;
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--rad); padding: 20px 22px;
+      overflow-x: auto; line-height: 1.65; margin: 14px 0 22px;
+      color: #a9c4e8;
+    }
+    pre .c  { color: var(--text3); }
+    pre .k  { color: var(--purple); }
+    pre .s  { color: var(--green); }
+    pre .n  { color: var(--teal); }
+    pre .t  { color: var(--accent); }
+    pre .g  { color: var(--green); }
+    pre .r  { color: var(--red); }
+    pre .a  { color: var(--amber); }
+
+    /* ── CALLOUT BOXES ──────────────────────────── */
+    .callout { border-radius: var(--rad); padding: 14px 18px; margin: 16px 0; border-left: 3px solid; display: flex; gap: 12px; }
+    .callout-icon { font-size: 15px; flex-shrink: 0; margin-top: 2px; }
+    .callout-body { flex: 1; }
+    .callout-body p { margin: 0; font-size: 14px; }
+    .callout-title { font-weight: 500; font-size: 11px; margin-bottom: 4px; font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.08em; }
+    .callout.info    { background: rgba(79,156,249,0.07);  border-color: var(--accent); }
+    .callout.info    .callout-title { color: var(--accent); } .callout.info p { color: #7eb4f5; }
+    .callout.success { background: rgba(52,211,153,0.07);  border-color: var(--green); }
+    .callout.success .callout-title { color: var(--green); } .callout.success p { color: #6ee7b7; }
+    .callout.warn    { background: rgba(251,191,36,0.07);  border-color: var(--amber); }
+    .callout.warn    .callout-title { color: var(--amber); } .callout.warn p { color: #fcd34d; }
+    .callout.danger  { background: rgba(248,113,113,0.07); border-color: var(--red); }
+    .callout.danger  .callout-title { color: var(--red); }   .callout.danger p { color: #fca5a5; }
+
+    /* diagram */
+    .diagram { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--rad); padding: 24px; margin: 18px 0; overflow-x: auto; }
+    /* ── DIAGRAM / FLOW BOXES ───────────────────── */
+    .flow-down { font-family: var(--mono); font-size: 13px; line-height: 2.1; color: var(--text2); }
+    .flow-box { display: inline-block; background: var(--bg3); border: 1px solid var(--bord2); border-radius: 7px; padding: 7px 16px; font-size: 12.5px; color: var(--text); margin: 2px 0; }
+    .flow-box.accent { border-color: var(--accent); color: var(--accent); background: rgba(79,156,249,0.08); }
+    .flow-box.green  { border-color: var(--green);  color: var(--green);  background: rgba(52,211,153,0.08); }
+    .flow-box.purple { border-color: var(--purple); color: var(--purple); background: rgba(167,139,250,0.08); }
+    .flow-box.red    { border-color: var(--red);    color: var(--red);    background: rgba(248,113,113,0.08); }
+
+    /* ── TABLES & BADGES ────────────────────────── */
+    table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: 13.5px; }
+    th { background: var(--bg3); color: var(--text2); font-weight: 500; font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; padding: 10px 14px; border: 1px solid var(--border); text-align: left; }
+    td { padding: 10px 14px; border: 1px solid var(--border); color: var(--text2); vertical-align: top; }
+    tr:hover td { background: rgba(255,255,255,0.015); }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-family: var(--mono); font-weight: 500; }
+    .badge.yes  { background: rgba(52,211,153,0.15);  color: var(--green); }
+    .badge.no   { background: rgba(248,113,113,0.15); color: var(--red); }
+    .badge.warn { background: rgba(251,191,36,0.15);  color: var(--amber); }
+
+    /* ── GRID & CARDS ───────────────────────────── */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 16px 0; }
+    .card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--rad); padding: 18px 20px; }
+    .card-title { font-family: var(--mono); font-size: 10px; color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 10px; }
+    .card ul { list-style: none; padding: 0; }
+    .card ul li { color: var(--text2); font-size: 13.5px; padding: 4px 0; display: flex; align-items: flex-start; gap: 8px; }
+    .card ul li::before { content: '·'; color: var(--text3); font-size: 18px; line-height: 1.3; flex-shrink: 0; }
+
+    /* ── COMPARE COLUMNS ────────────────────────── */
+    .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 16px 0; }
+    .compare-col { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--rad); overflow: hidden; }
+    .compare-header { padding: 11px 16px; font-family: var(--mono); font-size: 12px; font-weight: 500; border-bottom: 1px solid var(--border); }
+    .compare-header.pass { color: var(--green); background: rgba(52,211,153,0.07); }
+    .compare-header.fail { color: var(--red);   background: rgba(248,113,113,0.07); }
+    .compare-body { padding: 14px 16px; }
+    .compare-body p { font-size: 13.5px; margin: 0 0 8px; }
+    .compare-body p:last-child { margin: 0; }
+
+    /* ── NUMBERED STEPS ─────────────────────────── */
+    .steps { margin: 16px 0; }
+    .step { display: flex; gap: 16px; margin-bottom: 16px; }
+    .step-num { width: 26px; height: 26px; border-radius: 50%; background: rgba(79,156,249,0.1); border: 1px solid rgba(79,156,249,0.25); color: var(--accent); font-family: var(--mono); font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 3px; }
+    .step-body { flex: 1; }
+    .step-body strong { color: var(--text); display: block; margin-bottom: 4px; font-size: 14px; }
+    .step-body p { margin: 0; font-size: 13.5px; }
+
+    /* ── HASH ANATOMY WIDGET ────────────────────── */
+    .hash-anatomy { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--rad); padding: 20px; margin: 16px 0; }
+    .hash-string { display: flex; align-items: stretch; border-radius: 6px; overflow: hidden; border: 1px solid var(--border); margin-bottom: 14px; }
+    .hash-part { padding: 10px 12px; font-size: 11.5px; font-family: var(--mono); text-align: center; flex-shrink: 0; }
+    .hash-part.version { background: rgba(90,106,138,0.3); color: var(--text3); }
+    .hash-part.cost    { background: rgba(90,106,138,0.3); color: var(--text3); }
+    .hash-part.salt    { background: rgba(79,156,249,0.15); color: var(--accent); flex: 1; }
+    .hash-part.hsh     { background: rgba(52,211,153,0.12); color: var(--green); flex: 1; }
+    .hash-labels { display: flex; gap: 20px; flex-wrap: wrap; }
+    .hash-label { display: flex; align-items: center; gap: 7px; font-size: 12px; font-family: var(--mono); }
+    .hash-label .sw { width: 9px; height: 9px; border-radius: 2px; flex-shrink: 0; }
+
+    /* ── SCROLLBAR ──────────────────────────────── */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--bord2); border-radius: 3px; }
+
+    /* ── RESPONSIVE ─────────────────────────────── */
+    @media (max-width: 860px) { .main { padding: 32px 24px; } .grid-2, .compare { grid-template-columns: 1fr; } }
+    @media (max-width: 600px) { .sidebar { display: none; } }
+
+  </style>
+  <!-- END REGION: STYLES ======================================= -->
+</head>
+<body>
+
+<!-- ================================================================
+  REGION: SIDEBAR
+  Safe to edit: add/remove nav items, domains, categories.
+  DO NOT change class names — they are used by JS toggle functions.
+  Each domain block is labelled. To add a new domain, copy any
+  existing domain block and update the id, icon, label and nav items.
+================================================================ -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">DN</div>
+    <div class="logo-text">
+      <div class="top">Dev Notes</div>
+      <div class="bot">your knowledge base</div>
+    </div>
+  </div>
+
+  <!-- ── NAV TREE ── -->
+
+    <!-- NAV: SYSTEM DESIGN ────────────────────── -->
+    <div class="domain" id="dom-sysdesign">
+      <button class="domain-header" onclick="toggleDomain('dom-sysdesign')">
+        <span class="domain-left">
+          <span class="domain-icon" style="background:rgba(167,139,250,0.12);color:var(--purple)">🏗</span>
+          System Design
+        </span>
+        <svg class="d-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 3 11 8 6 13"/></svg>
+      </button>
+      <div class="domain-body">
+
+        <div class="category" id="cat-hld">
+          <button class="cat-header" onclick="toggleCat('cat-hld')">
+            <span>HLD</span>
+            <svg class="c-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 3 11 8 6 13"/></svg>
+          </button>
+          <div class="cat-body">
+            <button class="nav-item" onclick="nav('placeholder','System Design','HLD')"><span class="pip"></span>Load Balancing <span class="soon">soon</span></button>
+            <button class="nav-item" onclick="nav('placeholder','System Design','HLD')"><span class="pip"></span>Caching <span class="soon">soon</span></button>
+            <button class="nav-item" onclick="nav('placeholder','System Design','HLD')"><span class="pip"></span>CAP Theorem <span class="soon">soon</span></button>
+            <button class="nav-item" onclick="nav('placeholder','System Design','HLD')"><span class="pip"></span>Message Queues <span class="soon">soon</span></button>
+          </div>
+        </div>
+
+        <div class="category" id="cat-lld">
+          <button class="cat-header" onclick="toggleCat('cat-lld')">
+            <span>LLD</span>
+            <svg class="c-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 3 11 8 6 13"/></svg>
+          </button>
+          <div class="cat-body">
+            <button class="nav-item" onclick="nav('placeholder','System Design','LLD')"><span class="pip"></span>SOLID Principles <span class="soon">soon</span></button>
+            <button class="nav-item" onclick="nav('placeholder','System Design','LLD')"><span class="pip"></span>Design Patterns <span class="soon">soon</span></button>
+            <button class="nav-item" onclick="nav('placeholder','System Design','LLD')"><span class="pip"></span>UML Diagrams <span class="soon">soon</span></button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- NAV: JAVA ──────────────────────────────── -->
+    <div class="domain" id="dom-java">
+      <button class="domain-header" onclick="toggleDomain('dom-java')">
+        <span class="domain-left">
+          <span class="domain-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)">☕</span>
+          Java
+        </span>
+        <svg class="d-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 3 11 8 6 13"/></svg>
+      </button>
+      <div class="domain-body">
+
+        <div class="category" id="cat-java-core">
+          <button class="cat-header" onclick="toggleCat('cat-java-core')">
+            <span>Core</span>
+            <svg class="c-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 3 11 8 6 13"/></svg>
+          </button>
+          <div class="cat-body">
+            <button class="nav-item" onclick="nav('placeholder','Java','Core')"><span class="pip"></span>Collections <span class="soon">soon</span></button>
+            <button class="nav-item" onclick="nav('placeholder','Java','Core')"><span class="pip"></span>Generics <span class="soon">soon</span></button>
+            <button class="nav-item" onclick="nav('placeholder','Java','Core')"><span class="pip"></span>Exception Handling <span class="soon">soon</span></button>
+          </div>
+        </div>
+
+        <div class="category" id="cat-java-concurrency">
+          <button class="cat-header" onclick="toggleCat('cat-java-concurrency')">
+            <span>Concurrency</span>
+            <svg class="c-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 3 11 8 6 13"/></svg>
+          </button>
+          <div class="cat-body">
+            <button class="nav-item" onclick="nav('placeholder','Java','Concurrency')"><span class="pip"></span>Threads <span class="soon">soon</span></button>
+            <button class="nav-item" onclick="nav('placeholder','Java','Concurrency')"><span class="pip"></span>ExecutorService <span class="soon">soon</span></button>
+            <button class="nav-item" onclick="nav('placeholder','Java','Concurrency')"><span class="pip"></span>CompletableFuture <span class="soon">soon</span></button>
+          </div>
+        </div>
+
+        <div class="category" id="cat-java-modern">
+          <button class="cat-header" onclick="toggleCat('cat-java-modern')">
+            <span>Modern Java</span>
+            <svg class="c-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 3 11 8 6 13"/></svg>
+          </button>
+          <div class="cat-body">
+            <button class="nav-item" onclick="nav('placeholder','Java','Modern Java')"><span class="pip"></span>Streams API <span class="soon">soon</span></button>
+            <button class="nav-item" onclick="nav('placeholder','Java','Modern Java')"><span class="pip"></span>Optional <span class="soon">soon</span></button>
+            <button class="nav-item" onclick="nav('placeholder','Java','Modern Java')"><span class="pip"></span>Records &amp; Sealed <span class="soon">soon</span></button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- NAV: SPRING BOOT ───────────────────────── -->
+    <div class="domain" id="dom-spring">
+      <button class="domain-header open" onclick="toggleDomain('dom-spring')">
+        <span class="domain-left">
+          <span class="domain-icon" style="background:rgba(52,211,153,0.12);color:var(--green)">🌱</span>
+          Spring Boot
+        </span>
+        <svg class="d-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 3 11 8 6 13"/></svg>
+      </button>
+      <div class="domain-body open">
+
+        <div class="category" id="cat-auth">
+          <button class="cat-header open" onclick="toggleCat('cat-auth')">
+            <span>Authentication</span>
+            <svg class="c-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 3 11 8 6 13"/></svg>
+          </button>
+          <div class="cat-body open">
+            <button class="nav-item active" onclick="nav('jwt','Spring Boot','Authentication')"><span class="pip"></span>JWT</button>
+            <button class="nav-item" onclick="nav('bcrypt','Spring Boot','Authentication')"><span class="pip"></span>Bcrypt &amp; Hashing</button>
+            <button class="nav-item" onclick="nav('tokens','Spring Boot','Authentication')"><span class="pip"></span>Refresh Tokens</button>
+            <button class="nav-item" onclick="nav('securerandom','Spring Boot','Authentication')"><span class="pip"></span>SecureRandom</button>
+          </div>
+        </div>
+
+        <div class="category" id="cat-security">
+          <button class="cat-header" onclick="toggleCat('cat-security')">
+            <span>Security</span>
+            <svg class="c-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 3 11 8 6 13"/></svg>
+          </button>
+          <div class="cat-body">
+            <button class="nav-item" onclick="nav('placeholder','Spring Boot','Security')"><span class="pip"></span>Spring Security <span class="soon">soon</span></button>
+            <button class="nav-item" onclick="nav('placeholder','Spring Boot','Security')"><span class="pip"></span>CORS config <span class="soon">soon</span></button>
+            <button class="nav-item" onclick="nav('placeholder','Spring Boot','Security')"><span class="pip"></span>CSRF <span class="soon">soon</span></button>
+          </div>
+        </div>
+
+        <div class="category" id="cat-data">
+          <button class="cat-header" onclick="toggleCat('cat-data')">
+            <span>Data / JPA</span>
+            <svg class="c-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 3 11 8 6 13"/></svg>
+          </button>
+          <div class="cat-body">
+            <button class="nav-item" onclick="nav('orm','Spring Boot','Data / JPA')"><span class="pip"></span>ORM &amp; Impedance Mismatch</button>
+            <button class="nav-item" onclick="nav('jdbc','Spring Boot','Data / JPA')"><span class="pip"></span>JDBC &amp; Spring JDBC</button>
+            <button class="nav-item" onclick="nav('hibernate','Spring Boot','Data / JPA')"><span class="pip"></span>Hibernate</button>
+            <button class="nav-item" onclick="nav('jpa','Spring Boot','Data / JPA')"><span class="pip"></span>JPA &amp; Spring Data JPA</button>
+            <button class="nav-item" onclick="nav('placeholder','Spring Boot','Data / JPA')"><span class="pip"></span>Transactions <span class="soon">soon</span></button>
+          </div>
+        </div>
+
+        <div class="category" id="cat-rest">
+          <button class="cat-header" onclick="toggleCat('cat-rest')">
+            <span>REST APIs</span>
+            <svg class="c-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 3 11 8 6 13"/></svg>
+          </button>
+          <div class="cat-body">
+            <button class="nav-item" onclick="nav('placeholder','Spring Boot','REST APIs')"><span class="pip"></span>Controllers <span class="soon">soon</span></button>
+            <button class="nav-item" onclick="nav('placeholder','Spring Boot','REST APIs')"><span class="pip"></span>Exception Handling <span class="soon">soon</span></button>
+            <button class="nav-item" onclick="nav('dto-validation','Spring Boot','REST APIs')"><span class="pip"></span>DTO Validation</button>
+          </div>
+        </div>
+
+        <div class="category" id="cat-files">
+          <button class="cat-header" onclick="toggleCat('cat-files')">
+            <span>File Management</span>
+            <svg class="c-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 3 11 8 6 13"/></svg>
+          </button>
+          <div class="cat-body">
+            <button class="nav-item" onclick="nav('multipart','Spring Boot','File Management')"><span class="pip"></span>Multipart &amp; File Upload</button>
+            <button class="nav-item" onclick="nav('metadata','Spring Boot','File Management')"><span class="pip"></span>Metadata Modelling</button>
+            <button class="nav-item" onclick="nav('placeholder','Spring Boot','File Management')"><span class="pip"></span>File Storage (S3/Local) <span class="soon">soon</span></button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- NAV: DATABASES ─────────────────────────── -->
+    <div class="domain" id="dom-db">
+      <button class="domain-header" onclick="toggleDomain('dom-db')">
+        <span class="domain-left">
+          <span class="domain-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)">🗄</span>
+          Databases
+        </span>
+        <svg class="d-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 3 11 8 6 13"/></svg>
+      </button>
+      <div class="domain-body">
+
+        <div class="category" id="cat-sql">
+          <button class="cat-header" onclick="toggleCat('cat-sql')">
+            <span>SQL</span>
+            <svg class="c-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 3 11 8 6 13"/></svg>
+          </button>
+          <div class="cat-body">
+            <button class="nav-item" onclick="nav('placeholder','Databases','SQL')"><span class="pip"></span>PostgreSQL basics <span class="soon">soon</span></button>
+            <button class="nav-item" onclick="nav('placeholder','Databases','SQL')"><span class="pip"></span>Indexes <span class="soon">soon</span></button>
+            <button class="nav-item" onclick="nav('placeholder','Databases','SQL')"><span class="pip"></span>Query optimization <span class="soon">soon</span></button>
+          </div>
+        </div>
+
+        <div class="category" id="cat-nosql">
+          <button class="cat-header" onclick="toggleCat('cat-nosql')">
+            <span>NoSQL</span>
+            <svg class="c-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 3 11 8 6 13"/></svg>
+          </button>
+          <div class="cat-body">
+            <button class="nav-item" onclick="nav('placeholder','Databases','NoSQL')"><span class="pip"></span>MongoDB basics <span class="soon">soon</span></button>
+            <button class="nav-item" onclick="nav('placeholder','Databases','NoSQL')"><span class="pip"></span>Redis &amp; caching <span class="soon">soon</span></button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- NAV: WEB & NETWORKING ─────────────────── -->
+    <div class="domain" id="dom-web">
+      <button class="domain-header" onclick="toggleDomain('dom-web')">
+        <span class="domain-left">
+          <span class="domain-icon" style="background:rgba(79,156,249,0.12);color:var(--accent)">🌐</span>
+          Web &amp; Networking
+        </span>
+        <svg class="d-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 3 11 8 6 13"/></svg>
+      </button>
+      <div class="domain-body">
+
+        <div class="category" id="cat-http">
+          <button class="cat-header" onclick="toggleCat('cat-http')">
+            <span>HTTP</span>
+            <svg class="c-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 3 11 8 6 13"/></svg>
+          </button>
+          <div class="cat-body">
+            <button class="nav-item" onclick="nav('placeholder','Web & Networking','HTTP')"><span class="pip"></span>HTTP/HTTPS <span class="soon">soon</span></button>
+            <button class="nav-item" onclick="nav('placeholder','Web & Networking','HTTP')"><span class="pip"></span>Status codes <span class="soon">soon</span></button>
+            <button class="nav-item" onclick="nav('placeholder','Web & Networking','HTTP')"><span class="pip"></span>Headers <span class="soon">soon</span></button>
+          </div>
+        </div>
+
+        <div class="category" id="cat-websec">
+          <button class="cat-header" onclick="toggleCat('cat-websec')">
+            <span>Web Security</span>
+            <svg class="c-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 3 11 8 6 13"/></svg>
+          </button>
+          <div class="cat-body">
+            <button class="nav-item" onclick="nav('placeholder','Web & Networking','Web Security')"><span class="pip"></span>XSS <span class="soon">soon</span></button>
+            <button class="nav-item" onclick="nav('placeholder','Web & Networking','Web Security')"><span class="pip"></span>CSRF <span class="soon">soon</span></button>
+            <button class="nav-item" onclick="nav('placeholder','Web & Networking','Web Security')"><span class="pip"></span>SQL Injection <span class="soon">soon</span></button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- NAV: QUICK REFERENCE ───────────────────── -->
+    <div class="domain" id="dom-ref">
+      <button class="domain-header" onclick="toggleDomain('dom-ref')">
+        <span class="domain-left">
+          <span class="domain-icon" style="background:rgba(248,113,113,0.12);color:var(--red)">⚡</span>
+          Quick Reference
+        </span>
+        <svg class="d-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 3 11 8 6 13"/></svg>
+      </button>
+      <div class="domain-body">
+        <div class="category" id="cat-qref">
+          <button class="cat-header open" onclick="toggleCat('cat-qref')">
+            <span>Cheat Sheets</span>
+            <svg class="c-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 3 11 8 6 13"/></svg>
+          </button>
+          <div class="cat-body open">
+            <button class="nav-item" onclick="nav('summary','Quick Reference','Cheat Sheets')"><span class="pip"></span>Auth summary</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </nav>
+</aside>
+<!-- END REGION: SIDEBAR ======================================= -->
+
+<!-- ================================================================
+  REGION: MAIN CONTENT
+  Contains all page sections. Each page is wrapped in:
+    <section class="page" id="page-PAGEID"> ... </section>
+  To add a new page:
+    1. Add a nav item in SIDEBAR pointing to your new page id
+    2. Add a new <section class="page" id="page-NEWID"> block here
+  Pages are listed in the same order as the sidebar nav.
+================================================================ -->
+<main class="main">
+
+  <!-- PAGE: jwt ─────────────────────────────────
+       Spring Boot > Authentication > JWT
+  ─────────────────────────────────────────────── -->
+  <section class="page active" id="page-jwt">
+    <div class="breadcrumb"><span>Spring Boot</span><span class="sep">/</span><span>Authentication</span></div>
+    <div class="page-title">JWT</div>
+    <div class="page-desc">JSON Web Token — stateless access token</div>
+
+    <h2>What is a JWT?</h2>
+    <p>A JWT is a compact, self-contained token that carries information (called <strong>claims</strong>) inside itself. The server does not need to query a database to validate it — it just verifies the signature.</p>
+    <div class="callout info">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        <div class="callout-title">Stateless by design</div>
+        <p>All the information the server needs (who the user is, when the token expires) lives inside the token. No DB lookup on every request.</p>
+      </div>
+    </div>
+
+    <h2>Session vs JWT</h2>
+    <p>Before JWT, servers used sessions. Understanding the difference explains <em>why</em> JWT was invented.</p>
+    <div class="compare">
+      <div class="compare-col">
+        <div class="compare-header fail" style="color:var(--text2);background:var(--bg3)">Traditional Session Auth</div>
+        <div class="compare-body">
+          <div class="diagram" style="margin:0;border:none;padding:8px 0">
+            <div class="flow-down" style="font-size:12.5px">
+              <span class="flow-box accent">User logs in</span><br>↓<br>
+              <span class="flow-box">Server creates session</span><br>↓<br>
+              <span class="flow-box red">Session stored in DB / Redis</span><br>↓<br>
+              <span class="flow-box">Server returns session ID</span><br>↓<br>
+              <span class="flow-box accent">Client sends session ID on every request</span><br>↓<br>
+              <span class="flow-box red">Server looks up session in DB every time</span><br>↓<br>
+              <span class="flow-box">Access granted</span>
+            </div>
+          </div>
+          <p style="margin-top:12px;font-size:13px">Every request hits the database. Harder to scale across multiple servers.</p>
+        </div>
+      </div>
+      <div class="compare-col">
+        <div class="compare-header pass">JWT Auth</div>
+        <div class="compare-body">
+          <div class="diagram" style="margin:0;border:none;padding:8px 0">
+            <div class="flow-down" style="font-size:12.5px">
+              <span class="flow-box accent">User logs in</span><br>↓<br>
+              <span class="flow-box">Server verifies credentials</span><br>↓<br>
+              <span class="flow-box green">Server generates JWT — nothing stored</span><br>↓<br>
+              <span class="flow-box">Client stores JWT</span><br>↓<br>
+              <span class="flow-box accent">Client sends JWT on every request</span><br>↓<br>
+              <span class="flow-box green">Server verifies signature — no DB needed</span><br>↓<br>
+              <span class="flow-box">Access granted</span>
+            </div>
+          </div>
+          <p style="margin-top:12px;font-size:13px">No DB lookup per request. Scales easily — any server can verify the token.</p>
+        </div>
+      </div>
+    </div>
+
+    <h2>Structure</h2>
+    <p>A JWT has three parts separated by dots: <code>header.payload.signature</code></p>
+    <pre>eyJhbGciOiJIUzI1NiJ9  .  eyJzdWIiOiJ1c2VyMTIzIn0  .  abc123xyz
+        ↑                          ↑                         ↑
+     Header                     Payload                  Signature
+  (algorithm)               (claims/data)             (tamper-proof)</pre>
+
+    <h3>Header</h3>
+    <pre>{
+  <span class="k">"alg"</span>: <span class="s">"HS256"</span>,
+  <span class="k">"typ"</span>: <span class="s">"JWT"</span>
+}</pre>
+
+    <h3>Payload (claims)</h3>
+    <p>The actual data. Anyone can decode this — <strong>never store passwords or secrets here.</strong></p>
+    <pre>{
+  <span class="k">"sub"</span>:  <span class="s">"user@example.com"</span>,  <span class="c">// subject — who this token belongs to</span>
+  <span class="k">"iat"</span>:  <span class="a">1716000000</span>,          <span class="c">// issued at (unix timestamp)</span>
+  <span class="k">"exp"</span>:  <span class="a">1716003600</span>,          <span class="c">// expires at (1 hour later)</span>
+  <span class="k">"role"</span>: <span class="s">"USER"</span>                <span class="c">// custom claim — anything you need</span>
+}</pre>
+    <p>The <code>exp</code> claim is not a timer — it is just a number stored inside the token. The server reads it and compares it with the current time on every validation. If you don't set it, the token never expires.</p>
+
+    <h3>Signature</h3>
+    <pre>HMACSHA256(
+  base64url(header) + "." + base64url(payload),
+  <span class="s">"your-secret-key"</span>
+)</pre>
+    <div class="callout warn">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-body">
+        <div class="callout-title">Payload is NOT encrypted</div>
+        <p>It is only base64-encoded — anyone can decode it. The signature proves it was not tampered with, it does not hide the data.</p>
+      </div>
+    </div>
+
+    <h2>How the signature actually works</h2>
+    <p>This is the most important concept in JWT. Most beginners get confused here — so read carefully.</p>
+
+    <h3>Secret key ≠ Signature</h3>
+    <p>The most common confusion when first implementing JWT:</p>
+    <div class="compare">
+      <div class="compare-col">
+        <div class="compare-header fail">❌ Wrong mental model</div>
+        <div class="compare-body">
+          <p>Secret key <strong>is</strong> the signature</p>
+          <p>The token contains the secret directly</p>
+          <p>Validating = comparing secrets</p>
+        </div>
+      </div>
+      <div class="compare-col">
+        <div class="compare-header pass">✓ Correct mental model</div>
+        <div class="compare-body">
+          <p>Secret key is the <strong>input</strong></p>
+          <p>Signature is the <strong>output</strong> of the algorithm</p>
+          <p>The secret never leaves the server</p>
+        </div>
+      </div>
+    </div>
+
+    <h3>How the signature is generated</h3>
+    <div class="diagram">
+      <div class="flow-down">
+        <span class="flow-box accent">Header</span> &nbsp;+&nbsp; <span class="flow-box accent">Payload</span> &nbsp;+&nbsp; <span class="flow-box purple">Secret Key</span><br>↓<br>
+        <span class="flow-box">HS256 Algorithm runs</span><br>↓<br>
+        <span class="flow-box green">Signature = XYZ123</span><br>↓<br>
+        <span class="flow-box">Final JWT: HEADER.PAYLOAD.XYZ123</span>
+      </div>
+    </div>
+    <pre><span class="c">// Analogy — think of it like baking:</span>
+Secret Key  =  ingredient  (<span class="s">"my-secret-key"</span>)
+Signature   =  output      (<span class="s">"XYZ123"</span>)
+
+<span class="c">// Flour ≠ Bread. The flour goes IN to produce the bread.</span>
+<span class="c">// Secret ≠ Signature. The secret goes IN to produce the signature.</span></pre>
+
+    <h3>What happens when an attacker tampers with the payload</h3>
+    <p>This walkthrough shows exactly why JWT is tamper-proof — even though the payload is readable by anyone.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <strong>Server creates the original token</strong>
+          <pre style="margin-top:8px">Payload: { <span class="k">"sub"</span>: <span class="s">"user@example.com"</span>, <span class="k">"userId"</span>: <span class="a">1</span> }
+Secret:  <span class="s">"my-secret-key"</span>
+
+HS256(Header + Payload + Secret)  →  Signature = <span class="g">XYZ123</span>
+
+Token:  HEADER . PAYLOAD . <span class="g">XYZ123</span></pre>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <strong>Attacker decodes the payload</strong>
+          <p>Remember — payload is only base64-encoded, not encrypted. Attacker can read it freely. They see <code>userId: 1</code> and change it to <code>userId: 999</code>.</p>
+          <pre style="margin-top:8px"><span class="c">// Attacker modified payload:</span>
+{ <span class="k">"sub"</span>: <span class="s">"user@example.com"</span>, <span class="k">"userId"</span>: <span class="r">999</span> }
+
+<span class="c">// But they don't know the secret, so they can't regenerate the signature.</span>
+<span class="c">// They keep the OLD signature and send:</span>
+Token:  HEADER . <span class="r">NEW_PAYLOAD</span> . <span class="g">XYZ123</span>  <span class="c">← old signature, new payload</span></pre>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <strong>Server recomputes the signature</strong>
+          <p>The server never trusts the incoming signature. It always recomputes from scratch using its secret.</p>
+          <pre style="margin-top:8px">HS256(Header + <span class="r">NEW_PAYLOAD</span> + Secret)  →  <span class="r">ABC999</span>
+
+Compare:
+  Token signature     =  <span class="g">XYZ123</span>
+  Computed signature  =  <span class="r">ABC999</span>
+  Match?  <span class="r">NO  →  SignatureException  →  401 Unauthorized</span></pre>
+        </div>
+      </div>
+    </div>
+    <div class="callout success">
+      <div class="callout-icon">✅</div>
+      <div class="callout-body">
+        <div class="callout-title">Claims are only trusted AFTER signature verification</div>
+        <p>The server never reads <code>userId</code>, <code>role</code>, or <code>sub</code> from the token until the signature check passes. Verification always happens first.</p>
+      </div>
+    </div>
+
+    <h2>Auth flow</h2>
+    <div class="diagram">
+      <div class="flow-down">
+        <span class="flow-box accent">Client sends username + password</span><br>↓<br>
+        <span class="flow-box">Server verifies credentials</span><br>↓<br>
+        <span class="flow-box green">Server generates JWT and returns it</span><br>↓<br>
+        <span class="flow-box">Client stores JWT (memory or HttpOnly cookie)</span><br>↓<br>
+        <span class="flow-box accent">Client sends JWT in every request header</span><br>↓<br>
+        <span class="flow-box purple">Server verifies signature — no DB needed</span><br>↓<br>
+        <span class="flow-box green">Access granted if valid and not expired</span>
+      </div>
+    </div>
+
+    <h2>JJWT dependencies</h2>
+    <p>JJWT is split into three separate jars. You need all three — missing any one of them will cause runtime errors even if the code compiles fine.</p>
+    <pre><span class="c">&lt;!-- pom.xml --&gt;</span>
+<span class="k">&lt;dependency&gt;</span>
+    <span class="n">&lt;groupId&gt;</span>io.jsonwebtoken<span class="n">&lt;/groupId&gt;</span>
+    <span class="n">&lt;artifactId&gt;</span>jjwt-api<span class="n">&lt;/artifactId&gt;</span>
+    <span class="s">&lt;version&gt;0.12.6&lt;/version&gt;</span>
+<span class="k">&lt;/dependency&gt;</span>
+<span class="k">&lt;dependency&gt;</span>
+    <span class="n">&lt;groupId&gt;</span>io.jsonwebtoken<span class="n">&lt;/groupId&gt;</span>
+    <span class="n">&lt;artifactId&gt;</span>jjwt-impl<span class="n">&lt;/artifactId&gt;</span>
+    <span class="s">&lt;version&gt;0.12.6&lt;/version&gt;</span>
+    <span class="a">&lt;scope&gt;runtime&lt;/scope&gt;</span>
+<span class="k">&lt;/dependency&gt;</span>
+<span class="k">&lt;dependency&gt;</span>
+    <span class="n">&lt;groupId&gt;</span>io.jsonwebtoken<span class="n">&lt;/groupId&gt;</span>
+    <span class="n">&lt;artifactId&gt;</span>jjwt-jackson<span class="n">&lt;/artifactId&gt;</span>
+    <span class="s">&lt;version&gt;0.12.6&lt;/version&gt;</span>
+    <span class="a">&lt;scope&gt;runtime&lt;/scope&gt;</span>
+<span class="k">&lt;/dependency&gt;</span></pre>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">jjwt-api</div>
+        <ul>
+          <li>The public interface you write code against</li>
+          <li>Contains <code>Jwts</code>, <code>Claims</code>, <code>JwtBuilder</code></li>
+          <li>This is what IntelliJ autocompletes from</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title">jjwt-impl</div>
+        <ul>
+          <li>The actual implementation behind the interfaces</li>
+          <li>Without this, you get <code>NoClassDefFoundError</code> at runtime</li>
+          <li>Marked <code>runtime</code> — not needed at compile time</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title">jjwt-jackson</div>
+        <ul>
+          <li>Handles JSON serialisation of the payload</li>
+          <li>Converts Java objects ↔ JSON internally</li>
+          <li>Without this, claims won't serialize correctly</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title">Why runtime scope?</div>
+        <ul>
+          <li>Your code only calls the <code>jjwt-api</code> interfaces</li>
+          <li><code>jjwt-impl</code> and <code>jjwt-jackson</code> are loaded at runtime via service discovery</li>
+          <li>Keeping them <code>runtime</code> prevents accidentally depending on internal classes</li>
+        </ul>
+      </div>
+    </div>
+
+    <h2>The signing key — what getSigningKey() actually does</h2>
+    <p>You'll see <code>getSigningKey()</code> called in every JWT example, but beginners rarely know what's inside it. Here it is.</p>
+    <pre><span class="k">private</span> SecretKey <span class="n">getSigningKey</span>() {
+    <span class="k">byte</span>[] keyBytes = secretKey.getBytes(StandardCharsets.UTF_8);
+    <span class="k">return</span> Keys.hmacShaKeyFor(keyBytes);
+}</pre>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <strong>secretKey is your raw string from application.properties</strong>
+          <p>Something like <code>"my-super-secret-key-32-chars-min"</code> injected via <code>@Value</code>. It is a plain Java <code>String</code>.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <strong>.getBytes(StandardCharsets.UTF_8) — String → byte[]</strong>
+          <p>Signing algorithms work on raw bytes, not on Java Strings. UTF-8 encoding converts each character of your secret into its byte representation consistently across all platforms.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <strong>Keys.hmacShaKeyFor(keyBytes) — byte[] → SecretKey</strong>
+          <p>JJWT doesn't accept a raw byte array directly. It needs a <code>SecretKey</code> object — a Java type that wraps the bytes in a format the signing algorithm understands. <code>Keys.hmacShaKeyFor()</code> does that wrapping.</p>
+        </div>
+      </div>
+    </div>
+
+    <pre><span class="c">// Full picture:</span>
+<span class="s">"my-secret-key"</span>               <span class="c">// String — human readable</span>
+    ↓  .getBytes(UTF_8)
+<span class="k">byte</span>[] keyBytes                <span class="c">// raw bytes — what the algorithm needs</span>
+    ↓  Keys.hmacShaKeyFor()
+SecretKey signingKey           <span class="c">// what JJWT accepts in signWith() and verifyWith()</span></pre>
+
+    <div class="callout warn">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-body">
+        <div class="callout-title">Secret must be long enough</div>
+        <p>HS256 requires a minimum 256-bit (32-byte) key. If your secret string is shorter, <code>Keys.hmacShaKeyFor()</code> will throw a <code>WeakKeyException</code> at runtime. Use at least 32 characters.</p>
+      </div>
+    </div>
+
+    <h2>Common Spring pitfall — @Value not working</h2>
+    <p>This is a real bug many beginners hit when first writing <code>JwtService</code>.</p>
+
+    <div class="compare">
+      <div class="compare-col">
+        <div class="compare-header fail">❌ Broken — @Value does nothing</div>
+        <div class="compare-body">
+          <pre style="margin:0;border:none;padding:0;background:transparent;font-size:12px"><span class="c">// Plain Java class — NOT a Spring Bean</span>
+<span class="k">public class</span> <span class="t">JwtService</span> {
+
+    <span class="k">@Value</span>(<span class="s">"${jwt.secret}"</span>)
+    <span class="k">private</span> String secret;  <span class="c">// always null!</span>
+}</pre>
+          <p style="margin-top:10px;font-size:13px">Spring only injects <code>@Value</code> into beans it manages. A plain <code>new JwtService()</code> object is invisible to Spring — the field stays <code>null</code> and you get a <code>NullPointerException</code> when you try to use it.</p>
+        </div>
+      </div>
+      <div class="compare-col">
+        <div class="compare-header pass">✓ Fixed — make it a Spring Bean</div>
+        <div class="compare-body">
+          <pre style="margin:0;border:none;padding:0;background:transparent;font-size:12px"><span class="c">// Spring manages this class</span>
+<span class="k">@Service</span>
+<span class="k">public class</span> <span class="t">JwtService</span> {
+
+    <span class="k">@Value</span>(<span class="s">"${jwt.secret}"</span>)
+    <span class="k">private</span> String secret;  <span class="c">// injected ✅</span>
+}</pre>
+          <p style="margin-top:10px;font-size:13px"><code>@Service</code> tells Spring to create and manage this class. Now Spring sees the <code>@Value</code> annotation and injects the property value from <code>application.properties</code>.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout info">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        <div class="callout-title">Rule of thumb</div>
+        <p>Any class that uses <code>@Value</code>, <code>@Autowired</code>, or <code>@Inject</code> must be a Spring-managed bean — annotated with <code>@Service</code>, <code>@Component</code>, <code>@Repository</code>, or <code>@Controller</code>. Without one of these, Spring doesn't know the class exists.</p>
+      </div>
+    </div>
+
+    <h2>Generating a token (JJWT 0.12.x)</h2>
+    <p>Think of <code>Jwts.builder()</code> as gradually configuring a token — like filling out a form. Nothing is built until you call <code>.compact()</code> at the very end.</p>
+    <pre><span class="k">public</span> String <span class="n">generateAccessToken</span>(String email) {
+    Date now    = <span class="k">new</span> Date();
+    Date expiry = <span class="k">new</span> Date(now.getTime() + <span class="a">1000L</span> * <span class="a">60</span> * <span class="a">15</span>); <span class="c">// 15 minutes</span>
+
+    <span class="k">return</span> Jwts.builder()
+        .subject(email)                   <span class="c">// who this token belongs to</span>
+        .claim(<span class="s">"role"</span>, <span class="s">"USER"</span>)           <span class="c">// custom claim</span>
+        .issuedAt(now)                    <span class="c">// iat — when it was created</span>
+        .expiration(expiry)               <span class="c">// exp — when it expires</span>
+        .signWith(getSigningKey(), Jwts.SIG.HS256)  <span class="c">// sign with explicit algorithm</span>
+        .compact();                       <span class="c">// ← THIS is where the token is actually built</span>
+}</pre>
+
+    <h3>What does compact() do?</h3>
+    <p>This confused a lot of beginners. <code>Jwts.builder()</code> is just configuration — nothing exists yet. <code>.compact()</code> is the step that actually does the work.</p>
+    <div class="diagram">
+      <div class="flow-down">
+        <span class="flow-box">Jwts.builder()</span><br>↓<br>
+        <span class="flow-box">.subject() .claim() .issuedAt() .expiration() .signWith()</span><br>
+        <span style="font-size:12px;color:var(--text3);margin-left:4px">↑ just configuring — no token exists yet</span><br>↓<br>
+        <span class="flow-box green">.compact()</span><br>
+        <span style="font-size:12px;color:var(--text3);margin-left:4px">↑ builds the JWT, signs it, serializes to String</span><br>↓<br>
+        <span class="flow-box accent">"eyJhbGci...  eyJzdWI...  abc123"  ← final JWT String</span>
+      </div>
+    </div>
+    <pre><span class="c">// Without .compact() you have:</span>
+JwtBuilder builder  <span class="c">← just an object, not a token</span>
+
+<span class="c">// After .compact() you have:</span>
+String token = <span class="s">"eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOi..."</span>  <span class="c">← this is sent to the client</span></pre>
+
+    <h2>Validating a token (JJWT 0.12.x)</h2>
+    <p>Validation is the reverse of generation. You give the parser the secret key, hand it the raw token string, and it does all the work — signature check, expiry check, structure check.</p>
+
+    <h3>Each step explained</h3>
+    <pre><span class="k">private</span> Claims <span class="n">extractAllClaims</span>(String token) {
+    <span class="k">return</span> Jwts.parser()
+        .verifyWith(getSigningKey())     <span class="c">// Step 1 — tell parser which key to use later</span>
+        .build()                         <span class="c">// Step 2 — create the parser object</span>
+        .parseSignedClaims(token)        <span class="c">// Step 3 — actual validation happens here</span>
+        .getPayload();                   <span class="c">// Step 4 — extract the Claims from the result</span>
+}</pre>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <strong>.verifyWith(getSigningKey())</strong>
+          <p>Does <strong>not</strong> verify anything yet. It just tells the parser: "when you do verify, use this key." Think of it as handing the key to the doorman before the door even opens.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <strong>.build()</strong>
+          <p>Creates the parser object. Still no validation. Same idea as <code>Jwts.builder()</code> on the generation side — just setup.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <strong>.parseSignedClaims(token)</strong>
+          <p>This is where everything actually happens. The entire validation runs inside this single call.</p>
+          <div class="diagram" style="margin-top:10px">
+            <div class="flow-down" style="font-size:12.5px">
+              <span class="flow-box">Split token into Header . Payload . Signature</span><br>↓<br>
+              <span class="flow-box">Decode Header and Payload</span><br>↓<br>
+              <span class="flow-box purple">Recompute signature using your secret key</span><br>↓<br>
+              <span class="flow-box purple">Compare computed signature vs token signature</span><br>↓<br>
+              <span class="flow-box red">Mismatch? → throw SignatureException immediately</span><br>↓<br>
+              <span class="flow-box">Read exp from payload</span><br>↓<br>
+              <span class="flow-box red">Expired? → throw ExpiredJwtException</span><br>↓<br>
+              <span class="flow-box green">All valid → return Claims</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <strong>.getPayload()</strong>
+          <p>Returns the <code>Claims</code> object — a map-like object containing all the data from the payload.</p>
+        </div>
+      </div>
+    </div>
+
+    <h3>What does parseSignedClaims() return?</h3>
+    <p>A very common confusion — it does <strong>not</strong> return a boolean. It returns the parsed token data, which you can then read from.</p>
+    <pre><span class="k">var</span> result = Jwts.parser()
+    .verifyWith(getSigningKey())
+    .build()
+    .parseSignedClaims(token);
+
+<span class="c">// result contains everything from the token:</span>
+result.getPayload().getSubject();              <span class="c">// → "user@example.com"</span>
+result.getPayload().getExpiration();           <span class="c">// → Date object</span>
+result.getPayload().get(<span class="s">"role"</span>, String.class); <span class="c">// → "USER"</span></pre>
+    <div class="callout info">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        <div class="callout-title">Why return Claims and not boolean?</div>
+        <p>If it returned <code>true/false</code> you'd have no way to extract the user's email or role. The claims are the whole point — you need them to load the user for the request.</p>
+      </div>
+    </div>
+
+    <h3>Why does it throw exceptions instead of returning false?</h3>
+    <p>Invalid tokens are exceptional conditions. JJWT signals failure by throwing, not by returning a value. This keeps the happy path clean and forces callers to handle failures explicitly.</p>
+    <pre><span class="c">// Possible exceptions thrown by parseSignedClaims():</span>
+SignatureException      <span class="c">// payload was tampered with</span>
+ExpiredJwtException     <span class="c">// token is past its exp date</span>
+MalformedJwtException   <span class="c">// not a valid JWT format</span></pre>
+
+    <h3>Converting to boolean — the try-catch pattern</h3>
+    <p>If your method needs to return <code>true/false</code>, wrap the call in a try-catch. The boolean comes from <em>your</em> method, not from JJWT.</p>
+    <pre><span class="k">public boolean</span> <span class="n">validateToken</span>(String token) {
+    <span class="k">try</span> {
+        Jwts.parser()
+            .verifyWith(getSigningKey())
+            .build()
+            .parseSignedClaims(token);   <span class="c">// throws if anything is wrong</span>
+        <span class="k">return true</span>;                     <span class="c">// only reached if no exception</span>
+    } <span class="k">catch</span> (Exception e) {
+        <span class="k">return false</span>;                    <span class="c">// tampered, expired, malformed — all → false</span>
+    }
+}
+
+<span class="c">// Helper methods all delegate to extractAllClaims():</span>
+<span class="k">public</span> String <span class="n">extractUsername</span>(String token) {
+    <span class="k">return</span> extractAllClaims(token).getSubject();
+}
+<span class="k">public</span> Date <span class="n">extractExpiration</span>(String token) {
+    <span class="k">return</span> extractAllClaims(token).getExpiration();
+}</pre>
+    <div class="callout info">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        <div class="callout-title">Why extractAllClaims() is the foundation</div>
+        <p><code>extractUsername()</code>, <code>extractExpiration()</code>, and <code>validateToken()</code> all parse the token. If each called the parser directly, you'd parse the same token 3 times per request. One <code>extractAllClaims()</code> method parses once, and everything else reads from it.</p>
+      </div>
+    </div>
+
+    <h2>When the access token expires</h2>
+    <p>A common misconception: the backend does <strong>not</strong> automatically call the refresh endpoint. It simply returns a 401. The frontend is responsible for detecting the 401 and deciding what to do.</p>
+    <div class="diagram">
+      <div class="flow-down">
+        <span class="flow-box accent">Client makes API request with expired token</span><br>↓<br>
+        <span class="flow-box">Server parses token → ExpiredJwtException</span><br>↓<br>
+        <span class="flow-box red">Server returns 401 Unauthorized</span><br>↓<br>
+        <span class="flow-box purple">Frontend detects 401 response</span><br>↓<br>
+        <span class="flow-box">Frontend calls POST /auth/refresh with refresh token</span><br>↓<br>
+        <span class="flow-box green">Server validates refresh token → issues new access token</span><br>↓<br>
+        <span class="flow-box green">Frontend retries the original request with new token</span>
+      </div>
+    </div>
+
+    <h3>Two approaches to refresh</h3>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Simple (good for learning)</div>
+        <ul>
+          <li>Validate refresh token</li>
+          <li>Issue a new access token</li>
+          <li>Keep the refresh token unchanged</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title">Token rotation (production)</div>
+        <ul>
+          <li>Validate refresh token</li>
+          <li>Delete the old refresh token</li>
+          <li>Issue new access token + new refresh token</li>
+          <li>Enables theft detection</li>
+        </ul>
+      </div>
+    </div>
+
+    <h2>Best practices</h2>
+    <table>
+      <thead><tr><th>Setting</th><th>Recommendation</th><th>Reason</th></tr></thead>
+      <tbody>
+        <tr><td>Expiry</td><td>15 min – 1 hour</td><td>Short life limits damage if stolen</td></tr>
+        <tr><td>Secret key</td><td>256-bit minimum, env var</td><td>Never hardcode in source</td></tr>
+        <tr><td>Storage (web)</td><td>Memory or HttpOnly cookie</td><td>localStorage is vulnerable to XSS</td></tr>
+        <tr><td>Algorithm</td><td>Explicit — <code>Jwts.SIG.HS256</code></td><td>Never let the library infer; makes intent clear</td></tr>
+        <tr><td>alg=none attack</td><td>Always use <code>parseSignedClaims()</code></td><td>Rejects unsigned tokens — <code>parseUnsecuredClaims()</code> would accept them</td></tr>
+        <tr><td>Payload content</td><td>userId, email, role only</td><td>Never put passwords, secrets, or sensitive PII in payload</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- PAGE: bcrypt ──────────────────────────────
+       Spring Boot > Authentication > Bcrypt & Hashing
+  ─────────────────────────────────────────────── -->
+  <section class="page" id="page-bcrypt">
+    <div class="breadcrumb"><span>Spring Boot</span><span class="sep">/</span><span>Authentication</span></div>
+    <div class="page-title">Bcrypt &amp; Hashing</div>
+    <div class="page-desc">Password hashing — how it works, why it's safe</div>
+
+    <h2>What is a hash function?</h2>
+    <p>A hash function takes any input and produces a fixed-size output. It is <strong>one-way</strong> — you cannot reverse it.</p>
+    <pre>"mySecret123"  →  [hash function]  →  "8f14e45fceea167a5a36dedd4bea2543"
+<span class="c">// Cannot go backwards — impossible</span></pre>
+
+    <h2>Anatomy of a bcrypt hash</h2>
+    <p>The output is one string containing version + cost + salt + hash — everything needed to verify later.</p>
+    <div class="hash-anatomy">
+      <div class="hash-string">
+        <div class="hash-part version">$2a$</div>
+        <div class="hash-part cost">10$</div>
+        <div class="hash-part salt">N9qo8uLOickgx2ZMRZoMye</div>
+        <div class="hash-part hsh">IjZAgcfl7p92ldGxad68LJZdL17lhWy</div>
+      </div>
+      <div class="hash-labels">
+        <div class="hash-label"><div class="sw" style="background:rgba(90,106,138,0.6)"></div><span style="color:var(--text3)">version</span></div>
+        <div class="hash-label"><div class="sw" style="background:rgba(90,106,138,0.6)"></div><span style="color:var(--text3)">cost (10 = 1024 rounds)</span></div>
+        <div class="hash-label"><div class="sw" style="background:rgba(79,156,249,0.5)"></div><span style="color:var(--accent)">salt — random, stored here</span></div>
+        <div class="hash-label"><div class="sw" style="background:rgba(52,211,153,0.4)"></div><span style="color:var(--green)">actual hash</span></div>
+      </div>
+    </div>
+    <div class="callout success">
+      <div class="callout-icon">✅</div>
+      <div class="callout-body">
+        <div class="callout-title">Salt is stored inside the string</div>
+        <p>When bcrypt verifies a password, it reads the salt from the stored string — it does not generate a new one.</p>
+      </div>
+    </div>
+
+    <h2>Signup flow</h2>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div class="step-body"><strong>User enters password</strong><p>Raw password arrives. Never store this directly.</p></div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-body"><strong>bcrypt generates a random salt</strong><p>Fresh random value like <code>N9qo8uLOickgx2ZMRZoMye</code>.</p></div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-body"><strong>password + salt hashed 1024 times</strong><p>Repeated mixing makes the result slow to compute.</p></div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-body"><strong>One string stored in DB</strong><p>Packs version + cost + salt + hash: <code>$2a$10$N9qo...lhWy</code></p></div></div>
+    </div>
+    <pre>String hash = passwordEncoder.encode(<span class="s">"mySecret123"</span>);
+user.setPasswordHash(hash);
+userRepository.save(user);</pre>
+
+    <h2>Login flow (verification)</h2>
+    <p>bcrypt does <strong>not</strong> generate a new salt during verify. It reads the salt from the stored string and reuses it.</p>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div class="step-body"><strong>Find user by email</strong><p>Query DB by email — email finds the row, not the hash.</p></div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-body"><strong>Extract salt from stored string</strong><p>bcrypt reads <code>N9qo8uLOickgx2ZMRZoMye</code> directly from <code>$2a$10$...</code>.</p></div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-body"><strong>Rehash with the same salt</strong><p>Same salt = same output if the password is correct.</p></div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-body"><strong>Compare → true / false</strong><p>Match → login success. No match → reject.</p></div></div>
+    </div>
+    <pre>hash(<span class="s">"mySecret123"</span> + extractedSalt) = <span class="g">"IjZAgcfl7p92...17lhWy"</span>  <span class="c">← matches ✅</span>
+hash(<span class="s">"wrongPassword"</span> + extractedSalt) = <span class="r">"Xp92ldGx...Z7qL"</span>       <span class="c">← no match ❌</span>
+
+<span class="k">boolean</span> valid = passwordEncoder.matches(rawPassword, user.getPasswordHash());</pre>
+
+    <h2>Rounds explained</h2>
+    <p>One round = running the mixing function once. bcrypt chains rounds — output of round N feeds into round N+1.</p>
+    <pre>cost 10  →  2¹⁰ =    1,024 rounds  →  ~0.3s
+cost 12  →  2¹² =    4,096 rounds  →  ~1.2s
+cost 14  →  2¹⁴ =   16,384 rounds  →  ~5s</pre>
+    <div class="grid-2">
+      <div class="card"><div class="card-title">Real user logging in</div><ul>
+        <li>~0.3s — invisible to the user</li><li>Happens once per login</li>
+      </ul></div>
+      <div class="card"><div class="card-title">Attacker brute-forcing</div><ul>
+        <li>1 million guesses = 3.5 days</li><li>Billions of guesses = impractical</li>
+      </ul></div>
+    </div>
+
+    <h2>Why bcrypt works for passwords but NOT for tokens</h2>
+    <div class="compare">
+      <div class="compare-col">
+        <div class="compare-header pass">✓ Password login — works</div>
+        <div class="compare-body">
+          <p>Client sends: <code>email + password</code></p>
+          <p>DB lookup by: <strong>email</strong> — not hash</p>
+          <p>bcrypt.verify() reads salt from stored string → rehashes → compares</p>
+        </div>
+      </div>
+      <div class="compare-col">
+        <div class="compare-header fail">✗ Refresh token — broken</div>
+        <div class="compare-body">
+          <p>Client sends: <code>token only</code> — no email</p>
+          <p>Must query DB by token itself</p>
+          <p><code>WHERE hash = bcrypt(token)</code> → bcrypt produces a different hash every call (random salt) → 0 rows always</p>
+        </div>
+      </div>
+    </div>
+    <pre><span class="c">// SHA-256 is deterministic — same input, same output, always:</span>
+SHA256(<span class="s">"xK9mP2qL"</span>)  →  <span class="g">"8f14e45f..."</span>
+SHA256(<span class="s">"xK9mP2qL"</span>)  →  <span class="g">"8f14e45f..."</span>  <span class="c">← identical ✅</span>
+
+SELECT * FROM refresh_tokens WHERE token_hash = SHA256(<span class="s">"xK9mP2qL"</span>);
+<span class="c">// → 1 row found in milliseconds</span></pre>
+  </section>
+
+  <!-- PAGE: tokens ──────────────────────────────
+       Spring Boot > Authentication > Refresh Tokens
+  ─────────────────────────────────────────────── -->
+  <section class="page" id="page-tokens">
+    <div class="breadcrumb"><span>Spring Boot</span><span class="sep">/</span><span>Authentication</span></div>
+    <div class="page-title">Refresh Tokens</div>
+    <div class="page-desc">Long-lived tokens that issue new access tokens</div>
+
+    <h2>Why two tokens?</h2>
+    <p>JWTs are stateless — they cannot be revoked. So keep them short-lived (15 min – 1 hr). The refresh token is stored in DB and can be revoked, giving users a long session without sacrificing security.</p>
+    <div class="grid-2">
+      <div class="card"><div class="card-title">Access token (JWT)</div><ul>
+        <li>Short-lived: 15 min – 1 hr</li>
+        <li>Stateless, verified by signature</li>
+        <li>Sent with every API request</li>
+        <li>Not stored in DB</li>
+      </ul></div>
+      <div class="card"><div class="card-title">Refresh token</div><ul>
+        <li>Long-lived: 7 – 30 days</li>
+        <li>Stored in DB as SHA-256 hash</li>
+        <li>Used only to get a new access token</li>
+        <li>Revocable — just delete the row</li>
+      </ul></div>
+    </div>
+
+    <h2>Design choices</h2>
+    <table>
+      <thead><tr><th>Option</th><th>DB lookup</th><th>Revocable</th><th>Verdict</th></tr></thead>
+      <tbody>
+        <tr><td>JWT as refresh token</td><td><span class="badge yes">yes</span></td><td><span class="badge yes">yes (via DB)</span></td><td><span class="badge warn">works but overkill</span></td></tr>
+        <tr><td>bcrypt hash</td><td><span class="badge no">broken</span></td><td>—</td><td><span class="badge no">wrong tool</span></td></tr>
+        <tr><td>SecureRandom + SHA-256</td><td><span class="badge yes">yes</span></td><td><span class="badge yes">yes</span></td><td><span class="badge yes">correct ✓</span></td></tr>
+      </tbody>
+    </table>
+
+    <h2>Token rotation &amp; theft detection</h2>
+    <p>Every time a refresh token is used, delete it and issue a new one. If a rotated token is presented again, it signals theft.</p>
+    <div class="diagram">
+      <div class="flow-down">
+        <span class="flow-box accent">Client sends refreshToken A</span><br>↓<br>
+        <span class="flow-box">Server looks up A in DB — found</span><br>↓<br>
+        <span class="flow-box red">Server DELETES A from DB</span><br>↓<br>
+        <span class="flow-box green">Server issues refreshToken B + new access token</span><br>↓<br>
+        <span class="flow-box">Client stores B, discards A</span>
+      </div>
+    </div>
+    <div class="callout danger">
+      <div class="callout-icon">🔐</div>
+      <div class="callout-body">
+        <div class="callout-title">On token reuse — revoke everything</div>
+        <p>If an already-rotated token is presented, delete ALL tokens for that user and force full re-login.</p>
+      </div>
+    </div>
+
+    <h2>Implementation</h2>
+    <h3>Entity</h3>
+    <pre><span class="k">@Entity</span>
+<span class="k">public class</span> <span class="t">RefreshToken</span> {
+    <span class="k">@Id @GeneratedValue</span>
+    <span class="k">private</span> Long id;
+    <span class="k">@Column</span>(nullable = <span class="k">false</span>, unique = <span class="k">true</span>)
+    <span class="k">private</span> String tokenHash;   <span class="c">// SHA-256 of raw token</span>
+    <span class="k">@ManyToOne private</span> User user;
+    <span class="k">private</span> Instant expiresAt;
+    <span class="k">private boolean</span> revoked;
+}</pre>
+
+    <h3>On signup / login</h3>
+    <pre><span class="k">byte</span>[] bytes = <span class="k">new byte</span>[<span class="a">64</span>];
+<span class="k">new</span> <span class="t">SecureRandom</span>().nextBytes(bytes);
+String rawToken   = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+String tokenHash  = sha256(rawToken);
+refreshTokenRepo.save(<span class="k">new</span> <span class="t">RefreshToken</span>(tokenHash, user, Instant.now().plus(<span class="a">7</span>, DAYS)));
+<span class="k">return new</span> <span class="t">AuthResponse</span>(accessToken, rawToken);  <span class="c">// raw token to client only</span></pre>
+
+    <h3>On POST /auth/refresh</h3>
+    <pre>RefreshToken stored = repo.findByTokenHash(sha256(rawToken))
+    .orElseThrow(() -> <span class="k">new</span> <span class="t">InvalidTokenException</span>(<span class="s">"Invalid token"</span>));
+
+<span class="k">if</span> (stored.isExpired() || stored.isRevoked()) {
+    repo.deleteAllByUser(stored.getUser());  <span class="c">// possible theft — revoke all</span>
+    <span class="k">throw new</span> <span class="t">InvalidTokenException</span>(<span class="s">"Token reuse detected"</span>);
+}
+
+repo.delete(stored);  <span class="c">// rotate</span>
+<span class="k">return new</span> <span class="t">TokenPair</span>(
+    jwtService.generateAccessToken(stored.getUser()),
+    createRefreshToken(stored.getUser())
+);</pre>
+
+    <h3>On logout</h3>
+    <pre>repo.deleteByTokenHash(sha256(rawToken));</pre>
+  </section>
+
+  <!-- PAGE: securerandom ────────────────────────
+       Spring Boot > Authentication > SecureRandom
+  ─────────────────────────────────────────────── -->
+  <section class="page" id="page-securerandom">
+    <div class="breadcrumb"><span>Spring Boot</span><span class="sep">/</span><span>Authentication</span></div>
+    <div class="page-title">SecureRandom</div>
+    <div class="page-desc">Cryptographically secure token generation</div>
+
+    <h2>Two types of randomness</h2>
+    <div class="compare">
+      <div class="compare-col">
+        <div class="compare-header fail">Math.random() / java.util.Random</div>
+        <div class="compare-body">
+          <p>Pseudorandom — uses a mathematical formula</p>
+          <p>Predictable if attacker knows the seed</p>
+          <p>Use for: games, simulations</p>
+        </div>
+      </div>
+      <div class="compare-col">
+        <div class="compare-header pass">java.security.SecureRandom</div>
+        <div class="compare-body">
+          <p>Uses OS-level entropy (hardware noise, timing)</p>
+          <p>Unpredictable even if attacker knows your code</p>
+          <p>Use for: tokens, session IDs, API keys</p>
+        </div>
+      </div>
+    </div>
+
+    <h2>Generating a token</h2>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div class="step-body"><strong>Generate 64 random bytes</strong><p>1 byte = 8 bits = a value 0–255. SecureRandom fills an array of 64 such values from OS entropy.</p></div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-body"><strong>Base64 URL encode → safe string</strong><p>Raw bytes contain non-printable characters. Base64 gives you only A–Z, a–z, 0–9, <code>-</code>, <code>_</code> — safe in HTTP headers, URLs, JSON.</p></div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-body"><strong>SHA-256 hash → store in DB</strong><p>Never store the raw token. Store the hash. If DB is breached, hashes are useless without the raw token.</p></div></div>
+    </div>
+    <pre><span class="c">// Generate</span>
+<span class="k">byte</span>[] randomBytes = <span class="k">new byte</span>[<span class="a">64</span>];
+<span class="k">new</span> <span class="t">SecureRandom</span>().nextBytes(randomBytes);
+String rawToken = Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
+
+<span class="c">// Hash for DB</span>
+<span class="k">private</span> String <span class="n">sha256</span>(String raw) {
+    MessageDigest digest = MessageDigest.getInstance(<span class="s">"SHA-256"</span>);
+    <span class="k">byte</span>[] hash = digest.digest(raw.getBytes(StandardCharsets.UTF_8));
+    <span class="k">return</span> Base64.getUrlEncoder().withoutPadding().encodeToString(hash);
+}
+
+String tokenHash = sha256(rawToken);  <span class="c">// → store this in DB</span>
+<span class="c">// rawToken → send to client only, never store</span></pre>
+
+    <div class="grid-2">
+      <div class="card"><div class="card-title" style="color:var(--red)">Without hashing (bad)</div><ul>
+        <li>DB breach exposes raw tokens</li>
+        <li>Attacker can use immediately</li>
+        <li>All sessions compromised</li>
+      </ul></div>
+      <div class="card"><div class="card-title" style="color:var(--green)">With SHA-256 (good)</div><ul>
+        <li>DB breach exposes only hashes</li>
+        <li>Cannot reverse SHA-256</li>
+        <li>Hashes useless to attacker</li>
+      </ul></div>
+    </div>
+  </section>
+
+  <!-- PAGE: summary ─────────────────────────────
+       Quick Reference > Cheat Sheets > Auth Summary
+  ─────────────────────────────────────────────── -->
+  <section class="page" id="page-summary">
+    <div class="breadcrumb"><span>Quick Reference</span><span class="sep">/</span><span>Cheat Sheets</span></div>
+    <div class="page-title">Auth Summary</div>
+    <div class="page-desc">Everything at a glance</div>
+
+    <h2>Token strategy</h2>
+    <table>
+      <thead><tr><th>Property</th><th>Access token (JWT)</th><th>Refresh token</th></tr></thead>
+      <tbody>
+        <tr><td>Type</td><td>JWT</td><td>SecureRandom + SHA-256</td></tr>
+        <tr><td>Lifetime</td><td>15 min – 1 hr</td><td>7 – 30 days</td></tr>
+        <tr><td>Stored in DB</td><td><span class="badge no">No</span></td><td><span class="badge yes">Yes (hash only)</span></td></tr>
+        <tr><td>Validated by</td><td>Signature check</td><td>DB lookup by hash</td></tr>
+        <tr><td>Revocable</td><td><span class="badge no">No</span></td><td><span class="badge yes">Yes — delete row</span></td></tr>
+        <tr><td>Sent on every request</td><td><span class="badge yes">Yes</span></td><td><span class="badge no">No — only /auth/refresh</span></td></tr>
+      </tbody>
+    </table>
+
+    <h2>Hashing cheat sheet</h2>
+    <table>
+      <thead><tr><th>Algorithm</th><th>Salt</th><th>Deterministic</th><th>DB lookup</th><th>Use for</th></tr></thead>
+      <tbody>
+        <tr><td><code>bcrypt</code></td><td><span class="badge warn">Random each call</span></td><td><span class="badge no">No</span></td><td><span class="badge no">Broken</span></td><td>Passwords</td></tr>
+        <tr><td><code>SHA-256</code></td><td><span class="badge no">None</span></td><td><span class="badge yes">Yes</span></td><td><span class="badge yes">Works</span></td><td>Tokens, API keys</td></tr>
+        <tr><td><code>MD5 / SHA-1</code></td><td><span class="badge no">None</span></td><td><span class="badge yes">Yes</span></td><td><span class="badge yes">Works</span></td><td><span class="badge no">Broken — avoid</span></td></tr>
+      </tbody>
+    </table>
+
+    <h2>Implementation order</h2>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div class="step-body"><strong>RefreshToken entity + repository</strong><p>Fields: <code>tokenHash</code>, <code>user</code>, <code>expiresAt</code>, <code>revoked</code>.</p></div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-body"><strong>JwtService</strong><p><code>generateAccessToken(user)</code> and <code>validateToken(token)</code>.</p></div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-body"><strong>RefreshTokenService</strong><p><code>createRefreshToken(user)</code>, <code>rotateToken(rawToken)</code>, <code>revokeToken(rawToken)</code>.</p></div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-body"><strong>Wire into AuthService</strong><p>On signup/login: call both services, return <code>AuthResponse(accessToken, refreshToken)</code>.</p></div></div>
+      <div class="step"><div class="step-num">5</div><div class="step-body"><strong>POST /auth/refresh endpoint</strong><p>Accept raw token → rotate → return new pair.</p></div></div>
+    </div>
+  </section>
+
+  <!-- PAGE: orm ──────────────────────────────────
+       Spring Boot > Data / JPA > ORM & Impedance Mismatch
+  ─────────────────────────────────────────────── -->
+  <section class="page" id="page-orm">
+    <div class="breadcrumb"><span>Spring Boot</span><span class="sep">/</span><span>Data / JPA</span></div>
+    <div class="page-title">ORM &amp; the Impedance Mismatch</div>
+    <div class="page-desc">Why storing Java objects in a database is not straightforward</div>
+
+    <h2>The core problem</h2>
+    <p>You have a Java object and you want to store it in a database. Sounds simple — but Java and relational databases speak completely different languages.</p>
+
+    <div class="compare">
+      <div class="compare-col">
+        <div class="compare-header" style="color:var(--accent);background:rgba(79,156,249,0.07);border-color:var(--border)">Java World</div>
+        <div class="compare-body">
+          <p>Thinks in <strong>Objects</strong></p>
+          <p>A <code>User</code> has fields, methods, references to other objects</p>
+          <p>Relationships = object references (<code>user.getOrders()</code>)</p>
+          <p>Inheritance, polymorphism, encapsulation</p>
+        </div>
+      </div>
+      <div class="compare-col">
+        <div class="compare-header" style="color:var(--purple);background:rgba(167,139,250,0.07);border-color:var(--border)">Database World</div>
+        <div class="compare-body">
+          <p>Thinks in <strong>Tables and Rows</strong></p>
+          <p>A <code>users</code> table has columns — no methods, no behaviour</p>
+          <p>Relationships = foreign keys and joins</p>
+          <p>No inheritance, no polymorphism</p>
+        </div>
+      </div>
+    </div>
+
+    <pre><span class="c">// Java — you think like this:</span>
+User user = <span class="k">new</span> <span class="t">User</span>(<span class="a">1L</span>, <span class="s">"Ishant"</span>);
+user.getOrders();   <span class="c">// reference to a List&lt;Order&gt;</span>
+
+<span class="c">// Database — it thinks like this:</span>
+<span class="c">// users table</span>
+<span class="c">// | id |  name  |</span>
+<span class="c">// |  1 | Ishant |</span>
+
+<span class="c">// orders table</span>
+<span class="c">// | order_id | amount | user_id |   ← foreign key back to users.id</span>
+<span class="c">// |     101  |  500   |    1    |</span></pre>
+
+    <h2>The mismatch map</h2>
+    <div class="diagram">
+      <div style="display:grid;grid-template-columns:1fr 40px 1fr;gap:0;align-items:center;font-family:var(--mono);font-size:13px">
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <span class="flow-box accent" style="text-align:center">Object</span>
+          <span class="flow-box accent" style="text-align:center">Class</span>
+          <span class="flow-box accent" style="text-align:center">Field</span>
+          <span class="flow-box accent" style="text-align:center">Object reference</span>
+          <span class="flow-box accent" style="text-align:center">Inheritance</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;align-items:center;color:var(--text3)">
+          <span>↔</span><span>↔</span><span>↔</span><span>↔</span><span>↔</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <span class="flow-box purple" style="text-align:center">Row</span>
+          <span class="flow-box purple" style="text-align:center">Table</span>
+          <span class="flow-box purple" style="text-align:center">Column</span>
+          <span class="flow-box purple" style="text-align:center">Foreign Key</span>
+          <span class="flow-box purple" style="text-align:center">No direct equivalent</span>
+        </div>
+      </div>
+    </div>
+    <p>This gap between the two worlds is called the <strong>Object Relational Impedance Mismatch</strong>. Every tool in the Java database ecosystem — JDBC, Hibernate, JPA, Spring Data JPA — exists to bridge it.</p>
+
+    <h2>What is ORM?</h2>
+    <p>ORM stands for <strong>Object Relational Mapping</strong>. It is the technique of automatically converting between Java objects and database rows so you don't have to write that conversion code yourself.</p>
+
+    <div class="diagram">
+      <div class="flow-down">
+        <span class="flow-box accent">Java Object: User(id=1, name="Ishant")</span><br>↓ &nbsp;<span style="color:var(--text3);font-size:12px">ORM converts automatically</span><br>
+        <span class="flow-box purple">SQL: INSERT INTO users VALUES (1, 'Ishant')</span><br>↓<br>
+        <span class="flow-box green">Row stored in database</span>
+      </div>
+    </div>
+
+    <pre><span class="c">// Without ORM — you write all this yourself every time:</span>
+String sql = <span class="s">"INSERT INTO users(id, name) VALUES (?, ?)"</span>;
+PreparedStatement stmt = conn.prepareStatement(sql);
+stmt.setLong(<span class="a">1</span>, user.getId());
+stmt.setString(<span class="a">2</span>, user.getName());
+stmt.executeUpdate();
+
+<span class="c">// With ORM — one line:</span>
+repository.save(user);</pre>
+
+    <h2>What is a relational database?</h2>
+    <p>A relational database stores data in <strong>tables</strong>. Tables have rows and columns. Tables can be related to each other using keys.</p>
+
+    <h3>Primary key</h3>
+    <p>Uniquely identifies a row in a table. No two rows can have the same primary key.</p>
+    <pre><span class="c">-- users table</span>
+| id  | name   |
+|-----|--------|
+|  1  | Ishant |   ← id is the primary key
+|  2  | John   |</pre>
+
+    <h3>Foreign key</h3>
+    <p>A column in one table that points to the primary key of another table. This is how relationships are expressed in a database.</p>
+    <pre><span class="c">-- transactions table</span>
+| txn_id | amount | user_id |
+|--------|--------|---------|
+|  1001  |  500   |    1    |   ← user_id is a foreign key → users.id
+|  1002  |  200   |    1    |
+|  1003  |  750   |    2    |</pre>
+
+    <div class="callout info">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        <div class="callout-title">Object reference vs Foreign key</div>
+        <p>In Java you write <code>transaction.getUser()</code> — a direct reference. In the DB the same relationship is <code>transaction.user_id = users.id</code> — a key you must JOIN on. ORM bridges this gap automatically.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAGE: jdbc ──────────────────────────────────
+       Spring Boot > Data / JPA > JDBC & Spring JDBC
+  ─────────────────────────────────────────────── -->
+  <section class="page" id="page-jdbc">
+    <div class="breadcrumb"><span>Spring Boot</span><span class="sep">/</span><span>Data / JPA</span></div>
+    <div class="page-title">JDBC &amp; Spring JDBC</div>
+    <div class="page-desc">The lowest layer — how Java talks to a database</div>
+
+    <h2>What is JDBC?</h2>
+    <p>JDBC (Java Database Connectivity) is the standard Java API for communicating with any relational database. It is the lowest level — everything else (Hibernate, JPA, Spring Data JPA) sits on top of it.</p>
+
+    <div class="callout info">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        <div class="callout-title">JDBC is just interfaces</div>
+        <p>JDBC itself does not know how to talk to MySQL or PostgreSQL. It only defines the contract — a set of interfaces. The actual communication is handled by a <strong>JDBC Driver</strong> specific to each database.</p>
+      </div>
+    </div>
+
+    <h3>The four core JDBC interfaces</h3>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Connection</div>
+        <ul>
+          <li>Represents an open connection to the DB</li>
+          <li>Everything happens through a connection</li>
+          <li>Must be closed after use</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title">PreparedStatement</div>
+        <ul>
+          <li>A pre-compiled SQL query</li>
+          <li>Use <code>?</code> placeholders for parameters</li>
+          <li>Protects against SQL injection</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title">ResultSet</div>
+        <ul>
+          <li>Holds the rows returned by a query</li>
+          <li>You iterate over it row by row</li>
+          <li>Manually map each column to a field</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title">DriverManager</div>
+        <ul>
+          <li>Creates Connection objects</li>
+          <li>Loads the right driver for the URL</li>
+          <li>Entry point for raw JDBC</li>
+        </ul>
+      </div>
+    </div>
+
+    <h2>JDBC architecture</h2>
+    <div class="diagram">
+      <div class="flow-down">
+        <span class="flow-box accent">Your Application code</span><br>↓<br>
+        <span class="flow-box">JDBC API (interfaces — Connection, PreparedStatement, ResultSet)</span><br>↓<br>
+        <span class="flow-box purple">JDBC Driver (database-specific implementation)</span><br>↓<br>
+        <span class="flow-box green">Database (MySQL / PostgreSQL / H2 / Oracle)</span>
+      </div>
+    </div>
+
+    <h2>Raw JDBC example</h2>
+    <pre><span class="c">// 1. Open a connection</span>
+Connection conn = DriverManager.getConnection(
+    <span class="s">"jdbc:postgresql://localhost:5432/mydb"</span>,
+    <span class="s">"username"</span>, <span class="s">"password"</span>
+);
+
+<span class="c">// 2. Create a prepared statement</span>
+PreparedStatement stmt = conn.prepareStatement(
+    <span class="s">"SELECT * FROM users WHERE id = ?"</span>
+);
+stmt.setLong(<span class="a">1</span>, <span class="a">1L</span>);
+
+<span class="c">// 3. Execute and get results</span>
+ResultSet rs = stmt.executeQuery();
+
+<span class="c">// 4. Manually map columns to object fields</span>
+<span class="k">while</span> (rs.next()) {
+    User user = <span class="k">new</span> <span class="t">User</span>();
+    user.setId(rs.getLong(<span class="s">"id"</span>));
+    user.setName(rs.getString(<span class="s">"name"</span>));
+}
+
+<span class="c">// 5. Close everything (or you leak resources)</span>
+rs.close();
+stmt.close();
+conn.close();</pre>
+
+    <div class="callout danger">
+      <div class="callout-icon">😩</div>
+      <div class="callout-body">
+        <div class="callout-title">The JDBC pain</div>
+        <p>Every single query needs this. Open connection → create statement → set parameters → execute → iterate results → map columns → close everything. And if you forget to close, you leak connections. This boilerplate is why everything above JDBC was invented.</p>
+      </div>
+    </div>
+
+    <h2>What is a JDBC Driver (Connector)?</h2>
+    <p>JDBC only defines the <em>contract</em>. The driver is the actual implementation that knows how to talk to a specific database over the network.</p>
+
+    <div class="callout info">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        <div class="callout-title">Analogy — language vs translator</div>
+        <p>JDBC is like English. Your application speaks English (JDBC). But the database speaks its own dialect. The driver is the translator that converts your English instructions into what the database actually understands.</p>
+      </div>
+    </div>
+
+    <h3>Why do we need a driver?</h3>
+    <p>Different databases use different network protocols, authentication mechanisms, and wire formats. When you send <code>SELECT * FROM users</code>, MySQL and PostgreSQL receive it differently over the wire. The driver handles all of that so your Java code never has to.</p>
+
+    <table>
+      <thead><tr><th>Database</th><th>Driver (Maven artifact)</th></tr></thead>
+      <tbody>
+        <tr><td>MySQL</td><td><code>mysql-connector-j</code></td></tr>
+        <tr><td>PostgreSQL</td><td><code>postgresql</code></td></tr>
+        <tr><td>H2 (in-memory)</td><td><code>h2</code></td></tr>
+        <tr><td>Oracle</td><td><code>ojdbc11</code></td></tr>
+        <tr><td>SQL Server</td><td><code>mssql-jdbc</code></td></tr>
+      </tbody>
+    </table>
+
+    <pre><span class="c">&lt;!-- pom.xml — add the driver for YOUR database --&gt;</span>
+
+<span class="c">&lt;!-- H2 (in-memory, great for development) --&gt;</span>
+<span class="k">&lt;dependency&gt;</span>
+    <span class="n">&lt;groupId&gt;</span>com.h2database<span class="n">&lt;/groupId&gt;</span>
+    <span class="n">&lt;artifactId&gt;</span>h2<span class="n">&lt;/artifactId&gt;</span>
+    <span class="a">&lt;scope&gt;runtime&lt;/scope&gt;</span>
+<span class="k">&lt;/dependency&gt;</span>
+
+<span class="c">&lt;!-- PostgreSQL --&gt;</span>
+<span class="k">&lt;dependency&gt;</span>
+    <span class="n">&lt;groupId&gt;</span>org.postgresql<span class="n">&lt;/groupId&gt;</span>
+    <span class="n">&lt;artifactId&gt;</span>postgresql<span class="n">&lt;/artifactId&gt;</span>
+    <span class="a">&lt;scope&gt;runtime&lt;/scope&gt;</span>
+<span class="k">&lt;/dependency&gt;</span></pre>
+
+    <div class="callout info">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        <div class="callout-title">Why runtime scope?</div>
+        <p>Your code never imports driver classes directly. You only use JDBC interfaces. The driver is loaded automatically at runtime by the JVM through the URL prefix (<code>jdbc:postgresql://...</code>). So <code>runtime</code> scope is correct — not needed at compile time.</p>
+      </div>
+    </div>
+
+    <h2>Spring JDBC — one step up</h2>
+    <p>Spring JDBC is a thin convenience layer on top of raw JDBC. It does not add ORM — you still write SQL. But it eliminates all the boilerplate.</p>
+
+    <div class="compare">
+      <div class="compare-col">
+        <div class="compare-header fail">Raw JDBC — you manage everything</div>
+        <div class="compare-body">
+          <p>Open connection manually</p>
+          <p>Create PreparedStatement manually</p>
+          <p>Iterate ResultSet manually</p>
+          <p>Close all resources in finally block</p>
+          <p>Translate SQLExceptions manually</p>
+        </div>
+      </div>
+      <div class="compare-col">
+        <div class="compare-header pass">Spring JDBC — Spring manages the ceremony</div>
+        <div class="compare-body">
+          <p>Spring opens and closes connections</p>
+          <p>Spring handles exceptions</p>
+          <p>Spring cleans up resources</p>
+          <p>You only provide: SQL + row mapping logic</p>
+        </div>
+      </div>
+    </div>
+
+    <pre><span class="c">// Spring JDBC — JdbcTemplate</span>
+<span class="k">@Autowired</span>
+<span class="k">private</span> JdbcTemplate jdbcTemplate;
+
+<span class="c">// Query — no connection, no ResultSet, no close()</span>
+List&lt;User&gt; users = jdbcTemplate.query(
+    <span class="s">"SELECT * FROM users WHERE id = ?"</span>,
+    (rs, rowNum) -> {
+        User u = <span class="k">new</span> <span class="t">User</span>();
+        u.setId(rs.getLong(<span class="s">"id"</span>));
+        u.setName(rs.getString(<span class="s">"name"</span>));
+        <span class="k">return</span> u;
+    },
+    <span class="a">1L</span>
+);
+
+<span class="c">// Update — same simplicity</span>
+jdbcTemplate.update(
+    <span class="s">"INSERT INTO users(id, name) VALUES (?, ?)"</span>,
+    user.getId(), user.getName()
+);</pre>
+
+    <div class="callout warn">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-body">
+        <div class="callout-title">Spring JDBC still requires SQL</div>
+        <p>Spring JDBC reduces boilerplate but you still write every SQL query yourself. The row mapping from <code>ResultSet</code> to your object is still manual. This is why ORM (Hibernate) was invented on top of it.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAGE: hibernate ─────────────────────────────
+       Spring Boot > Data / JPA > Hibernate
+  ─────────────────────────────────────────────── -->
+  <section class="page" id="page-hibernate">
+    <div class="breadcrumb"><span>Spring Boot</span><span class="sep">/</span><span>Data / JPA</span></div>
+    <div class="page-title">Hibernate</div>
+    <div class="page-desc">The ORM framework that generates SQL so you don't have to</div>
+
+    <h2>What is Hibernate?</h2>
+    <p>Hibernate is the most popular Java ORM framework. You annotate your Java class, and Hibernate takes full responsibility for generating SQL, executing it, and converting the results back into objects.</p>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">What Hibernate does for you</div>
+        <ul>
+          <li>Reads your <code>@Entity</code> classes</li>
+          <li>Generates INSERT / UPDATE / DELETE / SELECT SQL</li>
+          <li>Executes SQL via JDBC underneath</li>
+          <li>Maps result rows back to objects</li>
+          <li>Manages relationships (<code>@OneToMany</code> etc)</li>
+          <li>First-level cache — avoids redundant DB hits</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title">What you do</div>
+        <ul>
+          <li>Annotate the class with <code>@Entity</code></li>
+          <li>Mark the primary key with <code>@Id</code></li>
+          <li>Call <code>entityManager.persist(user)</code></li>
+          <li>Everything else is Hibernate's job</li>
+        </ul>
+      </div>
+    </div>
+
+    <h2>Entity — your Java class mapped to a table</h2>
+    <pre><span class="k">@Entity</span>                    <span class="c">// tells Hibernate: map this class to a DB table</span>
+<span class="k">@Table</span>(name = <span class="s">"users"</span>)    <span class="c">// optional — defaults to class name lowercase</span>
+<span class="k">public class</span> <span class="t">User</span> {
+
+    <span class="k">@Id</span>                        <span class="c">// primary key</span>
+    <span class="k">@GeneratedValue</span>(strategy = GenerationType.IDENTITY)  <span class="c">// auto-increment</span>
+    <span class="k">private</span> Long id;
+
+    <span class="k">@Column</span>(name = <span class="s">"name"</span>)   <span class="c">// optional — defaults to field name</span>
+    <span class="k">private</span> String name;
+
+    <span class="c">// getters and setters</span>
+}</pre>
+
+    <p>This is all the information Hibernate needs. It reads the annotations once at startup and builds an internal map:</p>
+
+    <div class="diagram">
+      <div style="font-family:var(--mono);font-size:13px;line-height:1.8;color:var(--text2)">
+        <span style="color:var(--text3)">Hibernate reads annotations and creates this mapping internally:</span><br><br>
+        <span class="flow-box accent">User.class</span> &nbsp;↔&nbsp; <span class="flow-box purple">users (table)</span><br>
+        <span class="flow-box accent">User.id</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↔&nbsp; <span class="flow-box purple">id (column, primary key)</span><br>
+        <span class="flow-box accent">User.name</span> &nbsp;&nbsp;&nbsp;&nbsp;↔&nbsp; <span class="flow-box purple">name (column)</span>
+      </div>
+    </div>
+
+    <h2>How Hibernate translates operations</h2>
+    <pre><span class="c">// You write:</span>
+entityManager.persist(user);
+
+<span class="c">// Hibernate generates and executes:</span>
+<span class="g">INSERT INTO users (name) VALUES ('Ishant')</span>
+
+<span class="c">// You write:</span>
+entityManager.find(User.class, <span class="a">1L</span>);
+
+<span class="c">// Hibernate generates:</span>
+<span class="g">SELECT id, name FROM users WHERE id = 1</span>
+
+<span class="c">// You write:</span>
+entityManager.remove(user);
+
+<span class="c">// Hibernate generates:</span>
+<span class="g">DELETE FROM users WHERE id = 1</span></pre>
+
+    <h2>How Hibernate works internally</h2>
+    <p>There are two phases — startup (one time) and runtime (every request).</p>
+
+    <h3>Startup — happens once when your app boots</h3>
+    <div class="diagram">
+      <div class="flow-down">
+        <span class="flow-box">Spring Boot starts</span><br>↓<br>
+        <span class="flow-box accent">Hibernate scans for @Entity classes</span><br>↓<br>
+        <span class="flow-box">Reads annotations — builds class-to-table mapping metadata</span><br>↓<br>
+        <span class="flow-box purple">Creates SessionFactory (the heavy, one-time setup object)</span><br>↓<br>
+        <span class="flow-box green">App is ready — all mappings cached in memory</span>
+      </div>
+    </div>
+
+    <h3>Runtime — every time you do a DB operation</h3>
+    <div class="diagram">
+      <div class="flow-down">
+        <span class="flow-box accent">entityManager.persist(user)</span><br>↓<br>
+        <span class="flow-box">Hibernate looks up mapping: User → users table</span><br>↓<br>
+        <span class="flow-box purple">Generates SQL: INSERT INTO users (name) VALUES (?)</span><br>↓<br>
+        <span class="flow-box">Passes to JDBC with parameter values</span><br>↓<br>
+        <span class="flow-box">JDBC Driver sends to database</span><br>↓<br>
+        <span class="flow-box green">Row written to DB</span>
+      </div>
+    </div>
+
+    <h2>Relationship annotations</h2>
+    <p>One of Hibernate's biggest wins — relationships that would require manual JOINs in SQL are expressed as simple annotations.</p>
+    <pre><span class="k">@Entity</span>
+<span class="k">public class</span> <span class="t">User</span> {
+    <span class="k">@Id</span>
+    <span class="k">private</span> Long id;
+    <span class="k">private</span> String name;
+
+    <span class="k">@OneToMany</span>(mappedBy = <span class="s">"user"</span>)   <span class="c">// one user → many transactions</span>
+    <span class="k">private</span> List&lt;Transaction&gt; transactions;
+}
+
+<span class="k">@Entity</span>
+<span class="k">public class</span> <span class="t">Transaction</span> {
+    <span class="k">@Id</span>
+    <span class="k">private</span> Long id;
+    <span class="k">private</span> Double amount;
+
+    <span class="k">@ManyToOne</span>                          <span class="c">// many transactions → one user</span>
+    <span class="k">@JoinColumn</span>(name = <span class="s">"user_id"</span>)      <span class="c">// foreign key column name</span>
+    <span class="k">private</span> User user;
+}</pre>
+
+    <div class="callout info">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        <div class="callout-title">Hibernate sits on top of JDBC</div>
+        <p>Hibernate does not bypass JDBC. It generates SQL and then uses JDBC to execute it. The JDBC driver is still there at the bottom doing the actual network communication with the database.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAGE: jpa ───────────────────────────────────
+       Spring Boot > Data / JPA > JPA & Spring Data JPA
+  ─────────────────────────────────────────────── -->
+  <section class="page" id="page-jpa">
+    <div class="breadcrumb"><span>Spring Boot</span><span class="sep">/</span><span>Data / JPA</span></div>
+    <div class="page-title">JPA &amp; Spring Data JPA</div>
+    <div class="page-desc">The specification layer and the repository abstraction on top</div>
+
+    <h2>What is JPA?</h2>
+    <p>JPA (Java Persistence API) is a <strong>specification</strong> — not an implementation. It defines a standard set of annotations and interfaces that any ORM framework must implement.</p>
+
+    <div class="callout warn">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-body">
+        <div class="callout-title">Common misconception — JPA ≠ ORM</div>
+        <p>JPA does not do any work. It only defines rules. Hibernate is the one that actually reads your annotations and generates SQL. JPA is the contract; Hibernate is the contractor.</p>
+      </div>
+    </div>
+
+    <div class="compare">
+      <div class="compare-col">
+        <div class="compare-header" style="color:var(--accent);background:rgba(79,156,249,0.07);border-color:var(--border)">JPA (Specification)</div>
+        <div class="compare-body">
+          <p>Defines <em>what</em> must exist</p>
+          <p><code>@Entity</code>, <code>@Id</code>, <code>@OneToMany</code></p>
+          <p><code>EntityManager</code> interface</p>
+          <p><code>persist()</code>, <code>find()</code>, <code>remove()</code></p>
+          <p>Just a set of rules — no runnable code</p>
+        </div>
+      </div>
+      <div class="compare-col">
+        <div class="compare-header pass">Hibernate (Implementation)</div>
+        <div class="compare-body">
+          <p>Defines <em>how</em> it actually works</p>
+          <p>Implements every JPA annotation</p>
+          <p>Provides <code>EntityManager</code> implementation</p>
+          <p>Actually generates and runs SQL</p>
+          <p>Runnable code — the real engine</p>
+        </div>
+      </div>
+    </div>
+
+    <h3>The List / ArrayList analogy</h3>
+    <pre><span class="c">// In Java collections:</span>
+List&lt;String&gt; list = <span class="k">new</span> <span class="t">ArrayList</span>&lt;&gt;();
+<span class="c">//  ↑ specification        ↑ implementation</span>
+
+<span class="c">// In JPA:</span>
+EntityManager em = <span class="c">// ...obtained from Spring</span>
+<span class="c">//  ↑ JPA interface    ↑ Hibernate provides the actual object</span></pre>
+
+    <h2>Why was JPA created?</h2>
+    <p>Before JPA, every ORM framework had its own API. Hibernate had its own Session API. EclipseLink had different classes. If you wanted to switch ORM frameworks, you had to rewrite a large portion of your codebase.</p>
+
+    <div class="diagram">
+      <div class="flow-down">
+        <span class="flow-box accent">Your code uses: EntityManager (JPA standard)</span><br>↓<br>
+        <span style="color:var(--text3);font-size:12px;font-family:var(--mono)">at runtime, Spring injects whichever implementation you have on the classpath</span><br>↓
+        <div style="display:flex;gap:16px;margin-top:4px">
+          <span class="flow-box green">Hibernate</span>
+          <span class="flow-box purple">EclipseLink</span>
+          <span class="flow-box">OpenJPA</span>
+        </div>
+      </div>
+    </div>
+    <p>You swap the dependency in <code>pom.xml</code> — your code stays identical. JPA is the reason this works.</p>
+
+    <h2>What is Spring Data JPA?</h2>
+    <p>Even writing <code>entityManager.persist(user)</code> and <code>entityManager.find(User.class, id)</code> for every entity became repetitive. Spring Data JPA removes even that.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <strong>You declare an interface — nothing else</strong>
+          <pre style="margin-top:8px"><span class="k">public interface</span> <span class="t">UserRepository</span>
+    <span class="k">extends</span> JpaRepository&lt;User, Long&gt; {
+    <span class="c">// completely empty — no code needed</span>
+}</pre>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <strong>Spring generates the implementation at startup</strong>
+          <p>Spring sees your interface, sees it extends <code>JpaRepository</code>, and automatically creates a full implementation class behind the scenes. You never write it.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <strong>You get dozens of methods for free</strong>
+          <pre style="margin-top:8px">userRepository.save(user);           <span class="c">// INSERT or UPDATE</span>
+userRepository.findById(<span class="a">1L</span>);        <span class="c">// SELECT WHERE id = 1</span>
+userRepository.findAll();             <span class="c">// SELECT * FROM users</span>
+userRepository.deleteById(<span class="a">1L</span>);      <span class="c">// DELETE WHERE id = 1</span>
+userRepository.count();              <span class="c">// SELECT COUNT(*)</span></pre>
+        </div>
+      </div>
+    </div>
+
+    <h3>Query methods — just by naming the method</h3>
+    <p>Spring Data JPA can generate SQL from the method name itself — no SQL, no annotations needed.</p>
+    <pre><span class="k">public interface</span> <span class="t">UserRepository</span> <span class="k">extends</span> JpaRepository&lt;User, Long&gt; {
+
+    <span class="c">// Spring generates: SELECT * FROM users WHERE name = ?</span>
+    List&lt;User&gt; findByName(String name);
+
+    <span class="c">// Spring generates: SELECT * FROM users WHERE email = ? AND active = ?</span>
+    Optional&lt;User&gt; findByEmailAndActive(String email, <span class="k">boolean</span> active);
+
+    <span class="c">// Custom SQL when naming won't cut it</span>
+    <span class="k">@Query</span>(<span class="s">"SELECT u FROM User u WHERE u.createdAt > :date"</span>)
+    List&lt;User&gt; findUsersCreatedAfter(<span class="k">@Param</span>(<span class="s">"date"</span>) LocalDate date);
+}</pre>
+
+    <h2>How Spring connects to the database — end to end</h2>
+    <p>When your Spring Boot app starts, a precise sequence happens before your code can do any DB operation. Here it is in full.</p>
+
+    <h3>application.properties — what you provide</h3>
+    <pre><span class="c"># Tell Spring where the database is and how to connect</span>
+spring.datasource.url=jdbc:h2:mem:testdb       <span class="c"># connection URL</span>
+spring.datasource.username=sa                  <span class="c"># DB username</span>
+spring.datasource.password=                    <span class="c"># DB password (empty for H2)</span>
+spring.datasource.driver-class-name=org.h2.Driver  <span class="c"># driver class</span>
+
+<span class="c"># Tell Hibernate how to behave</span>
+spring.jpa.hibernate.ddl-auto=update           <span class="c"># create/update tables on startup</span>
+spring.jpa.show-sql=true                       <span class="c"># print generated SQL to console</span></pre>
+
+    <h3>URL anatomy</h3>
+    <pre>jdbc:h2:mem:testdb
+ ↑     ↑   ↑   ↑
+ │     │   │   └── database name
+ │     │   └────── mem = in-memory (gone when app stops)
+ │     └────────── which database (h2 / postgresql / mysql)
+ └──────────────── tells Java: use JDBC protocol</pre>
+
+    <h3>What Spring does with those properties — startup sequence</h3>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <strong>Reads datasource properties</strong>
+          <p>Spring Boot reads <code>spring.datasource.*</code> from <code>application.properties</code>.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <strong>Loads the JDBC Driver</strong>
+          <p>Loads <code>org.h2.Driver</code> (or whichever you specified). This is the translator that knows how to talk to your specific database.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <strong>Creates a DataSource with a connection pool (HikariCP)</strong>
+          <p>Spring does not open one connection and keep it. It creates a <strong>pool</strong> of pre-opened connections managed by HikariCP (the default). When your code needs a connection it borrows one from the pool and returns it after the query — much faster than opening a new connection every time.</p>
+          <pre style="margin-top:8px"><span class="c">// HikariCP pool — visualised</span>
+Pool: [ conn1 | conn2 | conn3 | conn4 | conn5 ... conn10 ]
+       ↑ idle, ready to use
+
+Request comes in → borrow conn1 → run query → return conn1 to pool</pre>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <strong>Creates EntityManagerFactory</strong>
+          <p>Hibernate uses this factory to create <code>EntityManager</code> instances per request. Think of it as the master configuration object for Hibernate.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <strong>Hibernate scans @Entity classes</strong>
+          <p>Scans your project for <code>@Entity</code> classes, reads annotations, builds class-to-table mappings. If <code>ddl-auto=update</code>, creates or updates DB tables to match your entities.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">6</div>
+        <div class="step-body">
+          <strong>Spring generates Repository implementations</strong>
+          <p>For every interface that extends <code>JpaRepository</code>, Spring generates a concrete implementation class at runtime. Your <code>UserRepository</code> bean is now ready.</p>
+        </div>
+      </div>
+    </div>
+
+    <h2>Complete architecture — the full stack</h2>
+    <p>This is the most important diagram to have in your head. Every database operation in a Spring Boot app travels this exact path.</p>
+
+    <div class="diagram">
+      <div class="flow-down">
+        <span class="flow-box accent">Your code: userRepository.save(user)</span><br>↓<br>
+        <span class="flow-box">Spring Data JPA (generated repository implementation)</span><br>↓<br>
+        <span class="flow-box">JPA — EntityManager.persist(user)</span><br>↓<br>
+        <span class="flow-box purple">Hibernate — generates SQL: INSERT INTO users ...</span><br>↓<br>
+        <span class="flow-box">JDBC — PreparedStatement.executeUpdate()</span><br>↓<br>
+        <span class="flow-box">JDBC Driver (H2 / PostgreSQL / MySQL connector)</span><br>↓<br>
+        <span class="flow-box green">Database — row written</span>
+      </div>
+    </div>
+
+    <h2>Quick reference table</h2>
+    <table>
+      <thead><tr><th>Term</th><th>What it is</th><th>Analogy</th></tr></thead>
+      <tbody>
+        <tr><td>JDBC</td><td>Low-level Java API for DB communication</td><td>Speaking directly in sign language — precise but exhausting</td></tr>
+        <tr><td>JDBC Driver</td><td>DB-specific connector (translator)</td><td>A human translator for a specific foreign language</td></tr>
+        <tr><td>Spring JDBC</td><td>JDBC with boilerplate removed</td><td>A form letter — you fill the blanks, Spring mails it</td></tr>
+        <tr><td>ORM</td><td>Technique of mapping objects ↔ rows</td><td>Auto-translate between two languages</td></tr>
+        <tr><td>Hibernate</td><td>ORM framework — generates SQL from annotations</td><td>The actual translator doing the work</td></tr>
+        <tr><td>JPA</td><td>Standard specification for ORM</td><td>The job description — not the person doing the job</td></tr>
+        <tr><td>EntityManager</td><td>Core JPA API for persist/find/remove</td><td>Your desk at the office — where work actually happens</td></tr>
+        <tr><td>Spring Data JPA</td><td>Repository abstraction on top of JPA</td><td>A PA who handles everything — you just say what you need</td></tr>
+        <tr><td>DataSource</td><td>Factory that provides DB connections</td><td>A pool of open phone lines to the DB</td></tr>
+        <tr><td>HikariCP</td><td>Default Spring Boot connection pool</td><td>The switchboard managing those phone lines</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- PAGE: multipart ────────────────────────────
+       Spring Boot > File Management > Multipart & File Upload
+  ─────────────────────────────────────────────── -->
+  <section class="page" id="page-multipart">
+    <div class="breadcrumb"><span>Spring Boot</span><span class="sep">/</span><span>File Management</span></div>
+    <div class="page-title">Multipart &amp; File Upload</div>
+    <div class="page-desc">A story — follow movie.mp4 from the browser all the way to your controller</div>
+
+    <!-- ── CHAPTER 1 ── -->
+    <h2>Chapter 1 &nbsp;·&nbsp; The browser has a problem</h2>
+    <p>Imagine you are building a Video Management System. A user wants to upload <code>movie.mp4</code>. The browser needs to send both some text and a binary video file together in one HTTP request.</p>
+    <p>If it were only text, a plain JSON request would work perfectly:</p>
+    <pre>{
+  <span class="k">"title"</span>: <span class="s">"Spring Tutorial"</span>
+}</pre>
+
+    <p>But the video is a binary file. One option is to base64-encode it and stuff it inside JSON:</p>
+    <pre>{
+  <span class="k">"title"</span>: <span class="s">"Spring Tutorial"</span>,
+  <span class="k">"video"</span>: <span class="s">"AABB99FF2D3E..."</span>   <span class="c">← base64 encoded binary</span>
+}</pre>
+
+    <p>But this is a terrible idea for large files:</p>
+    <div class="diagram">
+      <div class="flow-down">
+        <span class="flow-box red">300 MB video</span><br>↓ &nbsp;<span style="color:var(--text3);font-size:12px;font-family:var(--mono)">base64 encoding adds ~33% overhead</span><br>
+        <span class="flow-box red">~400 MB over the wire</span><br>
+        <span style="color:var(--text3);font-size:12px;font-family:var(--mono);margin-top:6px;display:block">+ extra CPU on both ends to encode and decode</span>
+      </div>
+    </div>
+
+    <p>So the browser reaches for a different content type:</p>
+    <pre><span class="k">Content-Type</span>: multipart/form-data</pre>
+
+    <!-- ── CHAPTER 2 ── -->
+    <h2>Chapter 2 &nbsp;·&nbsp; What is multipart?</h2>
+    <p>The browser says: <em>"I don't want to send one big JSON document. I want to send multiple independent pieces of data in the same request."</em></p>
+    <p>So it creates a multipart request — one request body, but divided into separate independent sections:</p>
+
+    <div class="diagram">
+      <div style="font-family:var(--mono);font-size:13px;color:var(--text2);line-height:1.8">
+        <div style="border:1px solid var(--bord2);border-radius:8px;padding:16px 20px;background:var(--bg3)">
+          <span style="color:var(--text3);font-size:11px;letter-spacing:0.1em;text-transform:uppercase">One HTTP request body</span><br><br>
+          <span style="color:var(--accent)">├──</span> <span class="flow-box accent">Part 1 &nbsp;→&nbsp; title = "Spring Tutorial"</span><br>
+          <span style="color:var(--accent)">└──</span> <span class="flow-box green">Part 2 &nbsp;→&nbsp; video = movie.mp4 (raw binary)</span>
+        </div>
+      </div>
+    </div>
+
+    <p>Hence the name: <strong>multi</strong> + <strong>part</strong>.</p>
+
+    <!-- ── CHAPTER 3 ── -->
+    <h2>Chapter 3 &nbsp;·&nbsp; The boundary appears</h2>
+    <p>Now the browser has a new problem. Multiple parts are packed into one body. How will the server know where one part ends and the next begins?</p>
+    <p>The browser generates a special delimiter called a <strong>boundary</strong> — a long random string unlikely to appear inside the uploaded file — and includes it in the <code>Content-Type</code> header:</p>
+
+    <pre><span class="k">Content-Type</span>: multipart/form-data; <span class="n">boundary</span>=<span class="s">ABC123</span></pre>
+
+    <p>The request body then looks like this:</p>
+
+    <div class="diagram">
+      <div style="font-family:var(--mono);font-size:13px;line-height:2;color:var(--text2)">
+        <span style="color:var(--red)">--ABC123</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:var(--text3);font-size:11px">← start of part 1</span><br>
+        <span style="color:var(--accent)">Content-Disposition: form-data; name="title"</span><br><br>
+        <span style="color:var(--green)">Spring Tutorial</span><br><br>
+        <span style="color:var(--red)">--ABC123</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:var(--text3);font-size:11px">← end of part 1 / start of part 2</span><br>
+        <span style="color:var(--accent)">Content-Disposition: form-data; name="video"; filename="movie.mp4"</span><br>
+        <span style="color:var(--accent)">Content-Type: video/mp4</span><br><br>
+        <span style="color:var(--green)">(raw binary bytes...)</span><br><br>
+        <span style="color:var(--red)">--ABC123--</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:var(--text3);font-size:11px">← double dash = no more parts</span>
+      </div>
+    </div>
+
+    <div class="callout info">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        <div class="callout-title">Analogy — chapter separators in a book</div>
+        <p>Think of the boundary like chapter dividers. Each <code>--ABC123</code> line says "new section starts here". The <code>--ABC123--</code> with the double dash at the end says "the book is finished." The browser generates this string automatically — you never write it yourself.</p>
+      </div>
+    </div>
+
+    <!-- ── CHAPTER 4 ── -->
+    <h2>Chapter 4 &nbsp;·&nbsp; The request reaches Tomcat</h2>
+    <p>The HTTP request arrives at Tomcat. Tomcat sees <code>Content-Type: multipart/form-data</code> and thinks: <em>"Ah, this is a multipart request."</em></p>
+    <p>But before it starts parsing, it asks itself some configuration questions:</p>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Questions Tomcat asks</div>
+        <ul>
+          <li>Where should I store temp files?</li>
+          <li>What is the maximum file size?</li>
+          <li>What is the maximum request size?</li>
+          <li>How much can I hold in memory?</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title">Answers come from</div>
+        <ul>
+          <li><code>MultipartConfigElement</code></li>
+          <li>Spring Boot creates it automatically</li>
+          <li>You just set properties</li>
+          <li>No manual bean creation needed</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ── CHAPTER 5 ── -->
+    <h2>Chapter 5 &nbsp;·&nbsp; MultipartConfigElement — the rulebook</h2>
+    <p><code>MultipartConfigElement</code> is not responsible for parsing. It is purely a configuration object — a rulebook that tells Tomcat what is and isn't allowed.</p>
+    <p>In Spring Boot you never touch this class directly. You just set two lines in <code>application.properties</code> and Spring Boot creates the bean automatically:</p>
+
+    <pre><span class="c"># application.properties</span>
+spring.servlet.multipart.max-file-size=500MB      <span class="c"># max size of a single file</span>
+spring.servlet.multipart.max-request-size=500MB   <span class="c"># max size of the whole request</span>
+spring.servlet.multipart.enabled=true             <span class="c"># already true by default</span></pre>
+
+    <div class="callout info">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        <div class="callout-title">Spring Boot does the wiring</div>
+        <p>The moment Spring Boot reads these properties, it creates and registers a <code>MultipartConfigElement</code> bean behind the scenes. You never instantiate it — the properties file is all the configuration you need.</p>
+      </div>
+    </div>
+
+    <!-- ── CHAPTER 6 ── -->
+    <h2>Chapter 6 &nbsp;·&nbsp; Tomcat opens the package</h2>
+    <p>With the rulebook in hand, Tomcat parses the request body using the boundary as a delimiter. It splits the raw bytes into separate pieces and wraps each one in a <code>Part</code> object from the Servlet API:</p>
+
+    <pre><span class="c">// Tomcat creates these Servlet API objects:</span>
+Part titlePart;   <span class="c">// contains "Spring Tutorial"</span>
+Part videoPart;   <span class="c">// contains the raw binary bytes of movie.mp4</span></pre>
+
+    <p>At this point Tomcat's job is mostly done. It has unpackaged the envelope and handed out the contents. Now Spring takes over.</p>
+
+    <!-- ── CHAPTER 7 ── -->
+    <h2>Chapter 7 &nbsp;·&nbsp; Spring enters the story</h2>
+    <p>Spring looks at the raw <code>Part</code> objects Tomcat produced and says: <em>"These Servlet API objects are low-level and not developer-friendly. Let me convert them into something easier to work with."</em></p>
+    <p>This conversion is the job of <code>MultipartResolver</code>:</p>
+
+    <div class="diagram">
+      <div class="flow-down">
+        <span class="flow-box purple">Tomcat &nbsp;→&nbsp; Part titlePart, Part videoPart</span><br>
+        <span style="font-size:11px;color:var(--text3);font-family:var(--mono)">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↑ Servlet API — low level</span><br>↓ &nbsp;<span style="color:var(--text3);font-size:12px;font-family:var(--mono)">MultipartResolver wraps each Part</span><br>
+        <span class="flow-box green">Spring &nbsp;→&nbsp; String title, MultipartFile video</span><br>
+        <span style="font-size:11px;color:var(--text3);font-family:var(--mono)">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↑ Spring API — clean and easy</span>
+      </div>
+    </div>
+
+    <!-- ── CHAPTER 8 ── -->
+    <h2>Chapter 8 &nbsp;·&nbsp; Birth of MultipartFile</h2>
+    <p>Spring creates a <code>MultipartFile</code> — its clean abstraction for an uploaded file. It is not a network concept or a protocol. It is simply a convenient Java object that wraps the raw file data and gives you useful methods.</p>
+
+    <pre><span class="c">// Everything you need about the uploaded file:</span>
+video.getOriginalFilename();          <span class="c">// → "movie.mp4"</span>
+video.getContentType();               <span class="c">// → "video/mp4"</span>
+video.getSize();                      <span class="c">// → 104857600  (bytes)</span>
+video.isEmpty();                      <span class="c">// → false</span>
+
+<span class="c">// Reading the bytes — pick based on file size:</span>
+InputStream stream = video.getInputStream();   <span class="c">// ✅ always safe — streams, doesn't load all at once</span>
+<span class="k">byte</span>[] data = video.getBytes();                <span class="c">// ⚠️  small files only — entire file into memory</span>
+
+<span class="c">// Save directly to disk:</span>
+video.transferTo(Path.of(<span class="s">"/uploads/movie.mp4"</span>));</pre>
+
+    <div class="callout warn">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-body">
+        <div class="callout-title">Never use getBytes() for large files</div>
+        <p>A 500 MB video becomes 500 MB on the Java heap instantly. Always use <code>getInputStream()</code> and stream the bytes to your storage layer.</p>
+      </div>
+    </div>
+
+    <!-- ── CHAPTER 9 ── -->
+    <h2>Chapter 9 &nbsp;·&nbsp; Understanding @RequestBody</h2>
+    <p>Let's step back from video uploads for a moment. Consider a plain JSON request:</p>
+
+    <pre><span class="c">POST /videos   Content-Type: application/json</span>
+
+{
+  <span class="k">"title"</span>: <span class="s">"Spring Tutorial"</span>
+}</pre>
+
+    <p>The body contains <strong>one JSON document</strong>. Spring can take the entire body and hand it to Jackson to deserialize into a Java object:</p>
+
+    <pre><span class="k">@PostMapping</span>
+<span class="k">public void</span> <span class="n">create</span>(<span class="k">@RequestBody</span> VideoRequest request) { }
+<span class="c">//               ↑ "take the ENTIRE HTTP body and convert to VideoRequest"</span></pre>
+
+    <!-- ── CHAPTER 10 ── -->
+    <h2>Chapter 10 &nbsp;·&nbsp; Why @RequestBody fails for multipart</h2>
+    <p>Now look at a multipart request. The body is not a single JSON document — it is multiple independent parts:</p>
+
+    <div class="diagram">
+      <div style="font-family:var(--mono);font-size:13px;color:var(--text2);line-height:1.8">
+        <div style="border:1px solid var(--bord2);border-radius:8px;padding:14px 20px;background:var(--bg3)">
+          <span style="color:var(--text3)">HTTP body</span><br>
+          <span style="color:var(--accent)">├──</span> Part(title) = "Spring Tutorial"<br>
+          <span style="color:var(--accent)">└──</span> Part(video) = (binary bytes)
+        </div>
+      </div>
+    </div>
+
+    <p>If Spring sees <code>@RequestBody</code> here, it gets confused:</p>
+    <pre><span class="c">// Spring asks:</span>
+<span class="c">// "What exactly should I deserialize?"</span>
+<span class="c">// "The title part? The video part? The entire multipart structure?"</span>
+<span class="c">// There is no obvious answer. @RequestBody expects ONE body → ONE object.</span>
+<span class="c">// Multipart gives MANY parts. The shapes don't match.</span></pre>
+
+    <!-- ── CHAPTER 11 ── -->
+    <h2>Chapter 11 &nbsp;·&nbsp; Why @RequestParam works</h2>
+    <p>After Tomcat has parsed the multipart request into parts, Spring can bind each part individually by name. <code>@RequestParam</code> says: <em>"Give me the part named 'title'. Give me the part named 'video'."</em></p>
+
+    <pre><span class="k">@PostMapping</span>(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+<span class="k">public void</span> <span class="n">upload</span>(
+    <span class="k">@RequestParam</span> String title,         <span class="c">// title part → String</span>
+    <span class="k">@RequestParam</span> MultipartFile video    <span class="c">// video part → MultipartFile</span>
+) { }</pre>
+
+    <div class="callout info">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        <div class="callout-title">@RequestParam is not just for query parameters</div>
+        <p>The name suggests it only works for URL query params like <code>?title=foo</code>. But Spring also uses it to bind individual multipart parts. Same annotation, two different contexts.</p>
+      </div>
+    </div>
+
+    <!-- ── CHAPTER 12 ── -->
+    <h2>Chapter 12 &nbsp;·&nbsp; Enter @RequestPart</h2>
+    <p>One day requirements change. Instead of a plain text title, the client now sends a full JSON metadata object as one of the parts alongside the video:</p>
+
+    <pre><span class="c">-- Part 1: metadata (JSON)</span>
+{
+  <span class="k">"title"</span>: <span class="s">"Spring Tutorial"</span>,
+  <span class="k">"duration"</span>: <span class="a">120</span>
+}
+
+<span class="c">-- Part 2: video (binary)</span>
+(raw bytes of movie.mp4)</pre>
+
+    <p><code>@RequestParam</code> treats everything as a simple string or file. To tell Spring <em>"this part is JSON — run it through Jackson and give me a Java object"</em>, you use <code>@RequestPart</code>:</p>
+
+    <pre><span class="k">@PostMapping</span>(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+<span class="k">public void</span> <span class="n">upload</span>(
+    <span class="k">@RequestPart</span> VideoMetadata metadata,   <span class="c">// JSON part → Jackson → Java object</span>
+    <span class="k">@RequestPart</span> MultipartFile video        <span class="c">// binary part → MultipartFile</span>
+) { }
+
+<span class="k">public class</span> <span class="t">VideoMetadata</span> {
+    <span class="k">private</span> String title;
+    <span class="k">private</span> Integer duration;
+}</pre>
+
+    <!-- ── CHAPTER 13: FULL JOURNEY ── -->
+    <h2>Chapter 13 &nbsp;·&nbsp; The complete journey</h2>
+    <p>Here is the full path <code>movie.mp4</code> travels from the moment the user clicks Upload to the moment your controller method runs.</p>
+
+    <div class="diagram">
+      <div class="flow-down">
+        <span class="flow-box accent">User clicks Upload — browser submits the form</span><br>↓<br>
+        <span class="flow-box">Browser packages data as multipart/form-data with boundary</span><br>↓<br>
+        <span class="flow-box purple">Tomcat receives raw bytes</span><br>↓ <span style="font-size:11px;color:var(--text3);font-family:var(--mono)">MultipartConfigElement limits checked here</span><br>
+        <span class="flow-box purple">Tomcat splits body by boundary → creates Servlet Part objects</span><br>↓<br>
+        <span class="flow-box">Spring's MultipartResolver wraps Part → MultipartFile</span><br>↓<br>
+        <span class="flow-box green">@RequestParam / @RequestPart binds each part to your method params</span><br>↓<br>
+        <span class="flow-box green">Your controller method runs with String title + MultipartFile video</span><br>↓<br>
+        <span class="flow-box">Service layer saves to S3 / MinIO / local disk</span>
+      </div>
+    </div>
+
+    <!-- ── THE THREE RULES ── -->
+    <h2>The three rules to remember</h2>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <strong>Entire request body is one JSON object → @RequestBody</strong>
+          <pre style="margin-top:8px"><span class="k">@PostMapping</span>
+<span class="k">public void</span> <span class="n">create</span>(<span class="k">@RequestBody</span> VideoRequest req) { }</pre>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <strong>Multipart with simple text fields or a file → @RequestParam</strong>
+          <pre style="margin-top:8px"><span class="k">@PostMapping</span>(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+<span class="k">public void</span> <span class="n">upload</span>(
+    <span class="k">@RequestParam</span> String title,
+    <span class="k">@RequestParam</span> MultipartFile video
+) { }</pre>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <strong>One multipart section is itself JSON → @RequestPart</strong>
+          <pre style="margin-top:8px"><span class="k">@PostMapping</span>(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+<span class="k">public void</span> <span class="n">upload</span>(
+    <span class="k">@RequestPart</span> VideoMetadata metadata,
+    <span class="k">@RequestPart</span> MultipartFile video
+) { }</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── FINAL MENTAL MODEL ── -->
+    <h2>Final mental model</h2>
+    <div class="diagram">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+        <div>
+          <div style="color:var(--text3);font-family:var(--mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:12px">JSON request</div>
+          <div class="flow-down" style="font-size:12.5px">
+            <span class="flow-box accent" style="width:100%;text-align:center;display:block">One body = one JSON doc</span><br>↓<br>
+            <span class="flow-box" style="width:100%;text-align:center;display:block">@RequestBody</span><br>↓<br>
+            <span class="flow-box green" style="width:100%;text-align:center;display:block">Java object via Jackson</span>
+          </div>
+        </div>
+        <div>
+          <div style="color:var(--text3);font-family:var(--mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:12px">Multipart request</div>
+          <div class="flow-down" style="font-size:12.5px">
+            <span class="flow-box accent" style="width:100%;text-align:center;display:block">One body = many parts</span><br>↓<br>
+            <span class="flow-box purple" style="width:100%;text-align:center;display:block">@RequestParam / @RequestPart</span><br>↓<br>
+            <span class="flow-box green" style="width:100%;text-align:center;display:block">String / MultipartFile / DTO</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout success">
+      <div class="callout-icon">✅</div>
+      <div class="callout-body">
+        <div class="callout-title">The one sentence to remember</div>
+        <p><code>@RequestBody</code> works on the <strong>entire</strong> request body. <code>@RequestParam</code> and <code>@RequestPart</code> work on <strong>individual parts</strong> inside a multipart body. <code>MultipartFile</code> is Spring's clean wrapper around an uploaded file after Tomcat and Spring have already done all the parsing.</p>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         FILE VALIDATION — story continues
+    ══════════════════════════════════════════════ -->
+    <div style="border-top:1px solid var(--border);margin:48px 0 40px"></div>
+    <div class="page-eyebrow" style="margin-bottom:8px">continues →</div>
+    <div style="font-size:22px;font-weight:600;color:var(--text);margin-bottom:6px">File Validation</div>
+    <div style="font-family:var(--mono);font-size:13px;color:var(--text2);margin-bottom:36px">The story continues — a senior engineer asks one question that changes everything</div>
+
+    <!-- Ch 1 -->
+    <h2>Chapter 14 &nbsp;·&nbsp; The senior engineer's question</h2>
+    <p>You've just built your upload endpoint and you're feeling good about it:</p>
+    <pre><span class="k">@PostMapping</span>(<span class="s">"/videos"</span>)
+<span class="k">public void</span> <span class="n">upload</span>(<span class="k">@RequestParam</span> MultipartFile video) {
+    <span class="c">// save the video...</span>
+}</pre>
+    <p>A senior engineer walks over and asks: <em>"What validations have you added?"</em></p>
+    <p>You say: <em>"It's just a video upload. Why do I need validation?"</em></p>
+    <p>The senior smiles. <em>"Let's see what happens."</em></p>
+    <p>What follows is a series of discoveries — each one revealing a new reason validation exists.</p>
+
+    <!-- Ch 2 — empty file -->
+    <h2>Chapter 15 &nbsp;·&nbsp; Discovery 1 — Correctness</h2>
+    <p>The first user opens your upload page, accidentally clicks Upload without selecting a file, and your server receives a <code>MultipartFile</code> where <code>video.isEmpty() == true</code>.</p>
+    <p>Without validation, the upload "succeeds". A record is created in the database pointing to a file that doesn't exist.</p>
+
+    <div class="callout info">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        <div class="callout-title">Not all validation is about security</div>
+        <p>Some validation is simply about correctness — did the user actually do what they intended to do? An empty file is not an attack, it's an accident. You still need to catch it.</p>
+      </div>
+    </div>
+
+    <pre><span class="c">// First validation — is there actually a file?</span>
+<span class="k">if</span> (video == <span class="k">null</span> || video.isEmpty()) {
+    <span class="k">throw new</span> <span class="t">ValidationException</span>(<span class="s">"No file provided"</span>);
+}</pre>
+
+    <!-- Ch 3 — size -->
+    <h2>Chapter 16 &nbsp;·&nbsp; Discovery 2 — Resource protection</h2>
+    <p>The next user uploads a 50 GB video. Your server starts processing it. Disk fills up. Memory pressure spikes. Other requests slow to a crawl. The server is struggling because of one file.</p>
+
+    <div class="diagram">
+      <div class="flow-down">
+        <span class="flow-box red">50 GB video arrives</span><br>↓<br>
+        <span class="flow-box red">Disk fills up</span><br>
+        <span class="flow-box red">Memory pressure increases</span><br>
+        <span class="flow-box red">Other users' requests slow down</span><br>↓<br>
+        <span class="flow-box red">Server effectively unavailable</span>
+      </div>
+    </div>
+
+    <p>The fix is two lines in <code>application.properties</code> — Tomcat rejects oversized requests before they even reach your controller:</p>
+    <pre>spring.servlet.multipart.max-file-size=500MB      <span class="c"># per file</span>
+spring.servlet.multipart.max-request-size=500MB   <span class="c"># total request</span></pre>
+
+    <div class="callout warn">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-body">
+        <div class="callout-title">These limits live in Tomcat, not your controller</div>
+        <p>If the file exceeds these limits, Tomcat rejects the request and your controller code never runs. You handle this by catching <code>MaxUploadSizeExceededException</code> in a <code>@ControllerAdvice</code>.</p>
+      </div>
+    </div>
+
+    <!-- Ch 4/5/6 — filename, mime, attacker -->
+    <h2>Chapter 17 &nbsp;·&nbsp; Discovery 3 — Security (and the lie)</h2>
+    <p>You add extension validation:</p>
+    <pre><span class="c">// Check extension — seems reasonable?</span>
+String filename = video.getOriginalFilename();
+<span class="k">if</span> (!filename.endsWith(<span class="s">".mp4"</span>)) {
+    <span class="k">throw new</span> <span class="t">ValidationException</span>(<span class="s">"Only MP4 allowed"</span>);
+}</pre>
+    <p>Someone points out: <em>"A filename is just a label."</em> Anyone can rename <code>virus.exe</code> to <code>movie.mp4</code>. Your check passes.</p>
+    <p>So you add MIME type validation:</p>
+    <pre><span class="c">// Check MIME type — better?</span>
+<span class="k">if</span> (!<span class="s">"video/mp4"</span>.equals(video.getContentType())) {
+    <span class="k">throw new</span> <span class="t">ValidationException</span>(<span class="s">"Invalid file type"</span>);
+}</pre>
+    <p>You feel safe. For about five minutes — until you learn what an attacker does.</p>
+
+    <div class="diagram">
+      <div style="font-family:var(--mono);font-size:13px;color:var(--text2);line-height:2">
+        <span style="color:var(--text3)">Attacker's curl command:</span><br>
+        <span class="flow-box red">curl -F "video=@virus.exe;type=video/mp4" http://your-api/videos</span><br>
+        <span style="font-size:11px;color:var(--text3)">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↑ manually overriding the Content-Type header</span><br><br>
+        <span style="color:var(--text3)">What Spring sees:</span><br>
+        <span class="flow-box red">video.getContentType() → "video/mp4"</span> &nbsp;<span style="color:var(--red);font-size:12px">← the lie succeeds</span><br><br>
+        <span style="color:var(--text3)">Result:</span><br>
+        <span class="flow-box red">Validation passes. virus.exe is stored on your server.</span>
+      </div>
+    </div>
+
+    <div class="callout danger">
+      <div class="callout-icon">🚨</div>
+      <div class="callout-body">
+        <div class="callout-title">The crucial lesson — MIME type is also client-supplied</div>
+        <p>The <code>Content-Type</code> header is sent by the client. The client can put anything there. Both the filename and the MIME type are just labels — labels the client writes. <strong>Neither proves what the file actually contains.</strong></p>
+      </div>
+    </div>
+
+    <h3>The package analogy</h3>
+    <div class="compare">
+      <div class="compare-col">
+        <div class="compare-header" style="color:var(--amber);background:rgba(251,191,36,0.07);border-color:var(--border)">Filename + MIME type</div>
+        <div class="compare-body">
+          <p>Like the label on a package that says <strong>"Contains: Chocolate"</strong></p>
+          <p>The sender wrote that label</p>
+          <p>The package could contain chocolate — or a brick</p>
+          <p>You only know what the sender <em>claimed</em></p>
+        </div>
+      </div>
+      <div class="compare-col">
+        <div class="compare-header pass">Actual bytes (Apache Tika)</div>
+        <div class="compare-body">
+          <p>Like <strong>opening the package and looking inside</strong></p>
+          <p>You inspect the actual contents</p>
+          <p>The sender's label is irrelevant</p>
+          <p>Reality is the source of truth</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ch 8 — Tika -->
+    <h2>Chapter 18 &nbsp;·&nbsp; Discovery 4 — Apache Tika reads the bytes</h2>
+    <p>Every file format leaves a <strong>fingerprint</strong> in its first few bytes. These are called <strong>magic bytes</strong>. Tika inspects these bytes directly — it doesn't care what the filename says or what the client put in the Content-Type header.</p>
+
+    <div class="diagram">
+      <div style="font-family:var(--mono);font-size:13px;color:var(--text2);line-height:1.8">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px">
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px">
+            <div style="color:var(--text3);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px">Executable (.exe)</div>
+            <span style="color:var(--red)">MZ</span><span style="color:var(--text3)">...rest of file</span>
+          </div>
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px">
+            <div style="color:var(--text3);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px">PDF</div>
+            <span style="color:var(--accent)">%PDF</span><span style="color:var(--text3)">...rest of file</span>
+          </div>
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px">
+            <div style="color:var(--text3);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px">MP4 video</div>
+            <span style="color:var(--green)">ftyp</span><span style="color:var(--text3)">...rest of file</span>
+          </div>
+        </div>
+        <span style="color:var(--text3);font-size:11px">↑ These magic bytes are written by the program that created the file — not by the user. They can't be spoofed by renaming.</span>
+      </div>
+    </div>
+
+    <pre><span class="c">&lt;!-- pom.xml --&gt;</span>
+<span class="k">&lt;dependency&gt;</span>
+    <span class="n">&lt;groupId&gt;</span>org.apache.tika<span class="n">&lt;/groupId&gt;</span>
+    <span class="n">&lt;artifactId&gt;</span>tika-core<span class="n">&lt;/artifactId&gt;</span>
+    <span class="s">&lt;version&gt;2.9.1&lt;/version&gt;</span>
+<span class="k">&lt;/dependency&gt;</span></pre>
+
+    <pre><span class="c">// Apache Tika — reads actual bytes, ignores the label</span>
+Tika tika = <span class="k">new</span> <span class="t">Tika</span>();
+String detectedType = tika.detect(video.getInputStream());
+<span class="c">// → "video/mp4"        for a real MP4</span>
+<span class="c">// → "application/x-dosexec"  for a renamed .exe</span>
+<span class="c">// → "application/pdf"  for a renamed PDF</span>
+
+<span class="k">if</span> (!<span class="s">"video/mp4"</span>.equals(detectedType)) {
+    <span class="k">throw new</span> <span class="t">ValidationException</span>(<span class="s">"File is not a real MP4"</span>);
+}</pre>
+
+    <div class="callout success">
+      <div class="callout-icon">✅</div>
+      <div class="callout-body">
+        <div class="callout-title">Trust ranking</div>
+        <p><strong>Actual bytes (Tika) &gt; MIME type &gt; Filename extension</strong><br>The bytes are written by the program that created the file. The MIME type and filename are written by the user. Always trust what's inside over what the label says.</p>
+      </div>
+    </div>
+
+    <!-- Ch 10 — business rules -->
+    <h2>Chapter 19 &nbsp;·&nbsp; Discovery 5 — Business rules</h2>
+    <p>Finally the product team joins: <em>"We only support MP4. Maximum 500 MB. No other formats."</em></p>
+    <p>These are not security concerns. They are not correctness concerns. They are <strong>business requirements</strong> — rules specific to your product.</p>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Examples of business rules</div>
+        <ul>
+          <li>Only MP4 or MOV — no AVI, no WMV</li>
+          <li>Maximum 500 MB per video</li>
+          <li>Only PNG images — no JPG</li>
+          <li>PDF attachments only, max 10 MB</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title">Where they live</div>
+        <ul>
+          <li>Usually as constants in a validator class</li>
+          <li>Or in <code>application.properties</code> for configurability</li>
+          <li>Every application defines its own</li>
+          <li>Can change — easy to update in one place</li>
+        </ul>
+      </div>
+    </div>
+
+    <pre><span class="c">// Business rule — allowed types from config</span>
+<span class="k">private static final</span> Set&lt;String&gt; ALLOWED_TYPES =
+    Set.of(<span class="s">"video/mp4"</span>, <span class="s">"video/quicktime"</span>);
+
+<span class="k">private static final long</span> MAX_SIZE = <span class="a">500L</span> * <span class="a">1024</span> * <span class="a">1024</span>; <span class="c">// 500 MB</span>
+
+<span class="k">if</span> (!ALLOWED_TYPES.contains(detectedType)) {
+    <span class="k">throw new</span> <span class="t">ValidationException</span>(<span class="s">"Unsupported format"</span>);
+}
+<span class="k">if</span> (video.getSize() > MAX_SIZE) {
+    <span class="k">throw new</span> <span class="t">ValidationException</span>(<span class="s">"File too large"</span>);
+}</pre>
+
+    <!-- 4 reasons -->
+    <h2>Chapter 20 &nbsp;·&nbsp; The four reasons validation exists</h2>
+
+    <div class="grid-2">
+      <div class="card" style="border-color:var(--accent)">
+        <div class="card-title" style="color:var(--accent)">1 · Correctness</div>
+        <ul>
+          <li>Did the user actually send a file?</li>
+          <li><code>video.isEmpty()</code></li>
+          <li>Not security — just accuracy</li>
+        </ul>
+      </div>
+      <div class="card" style="border-color:var(--amber)">
+        <div class="card-title" style="color:var(--amber)">2 · Resource protection</div>
+        <ul>
+          <li>Prevents disk / memory exhaustion</li>
+          <li><code>max-file-size</code> in properties</li>
+          <li>Protects all users, not just one</li>
+        </ul>
+      </div>
+      <div class="card" style="border-color:var(--red)">
+        <div class="card-title" style="color:var(--red)">3 · Security</div>
+        <ul>
+          <li>Extension check — weak, but a start</li>
+          <li>MIME check — better, still spoofable</li>
+          <li>Tika bytes — the real truth</li>
+        </ul>
+      </div>
+      <div class="card" style="border-color:var(--purple)">
+        <div class="card-title" style="color:var(--purple)">4 · Business rules</div>
+        <ul>
+          <li>Only specific formats allowed</li>
+          <li>Specific size limits</li>
+          <li>Product-defined requirements</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Full production flow -->
+    <h2>Chapter 21 &nbsp;·&nbsp; The production validation flow</h2>
+    <p>A well-built upload endpoint runs validations in a specific order — cheapest checks first, most expensive last.</p>
+
+    <div class="diagram">
+      <div class="flow-down">
+        <span class="flow-box accent">Receive MultipartFile from controller</span><br>↓<br>
+        <span class="flow-box">① File exists and is not empty &nbsp;<span style="color:var(--text3);font-size:11px">— correctness</span></span><br>↓<br>
+        <span class="flow-box amber">② Size within limits &nbsp;<span style="color:var(--text3);font-size:11px">— resource protection (already enforced by Tomcat)</span></span><br>↓<br>
+        <span class="flow-box">③ Extension check &nbsp;<span style="color:var(--text3);font-size:11px">— security, first layer (weak but fast)</span></span><br>↓<br>
+        <span class="flow-box">④ MIME type check &nbsp;<span style="color:var(--text3);font-size:11px">— security, second layer (spoofable but worth checking)</span></span><br>↓<br>
+        <span class="flow-box red">⑤ Apache Tika byte inspection &nbsp;<span style="color:var(--text3);font-size:11px">— security, ground truth</span></span><br>↓<br>
+        <span class="flow-box purple">⑥ Business rules &nbsp;<span style="color:var(--text3);font-size:11px">— allowed formats, custom size limits</span></span><br>↓<br>
+        <span class="flow-box green">All checks passed → store the file</span>
+      </div>
+    </div>
+
+    <!-- Full validator code -->
+    <h2>Putting it all together — a production validator</h2>
+    <pre><span class="k">@Component</span>
+<span class="k">public class</span> <span class="t">VideoFileValidator</span> {
+
+    <span class="k">private static final</span> Set&lt;String&gt; ALLOWED_EXTENSIONS =
+        Set.of(<span class="s">"mp4"</span>, <span class="s">"mov"</span>);
+
+    <span class="k">private static final</span> Set&lt;String&gt; ALLOWED_MIME_TYPES =
+        Set.of(<span class="s">"video/mp4"</span>, <span class="s">"video/quicktime"</span>);
+
+    <span class="k">private static final long</span> MAX_BYTES =
+        <span class="a">500L</span> * <span class="a">1024</span> * <span class="a">1024</span>;  <span class="c">// 500 MB</span>
+
+    <span class="k">private final</span> Tika tika = <span class="k">new</span> <span class="t">Tika</span>();
+
+    <span class="k">public void</span> <span class="n">validate</span>(MultipartFile file) {
+
+        <span class="c">// ① Correctness — did a file actually arrive?</span>
+        <span class="k">if</span> (file == <span class="k">null</span> || file.isEmpty()) {
+            <span class="k">throw new</span> <span class="t">ValidationException</span>(<span class="s">"No file provided"</span>);
+        }
+
+        <span class="c">// ② Resource — size check (belt + suspenders over the Tomcat limit)</span>
+        <span class="k">if</span> (file.getSize() > MAX_BYTES) {
+            <span class="k">throw new</span> <span class="t">ValidationException</span>(<span class="s">"File exceeds 500 MB"</span>);
+        }
+
+        <span class="c">// ③ Security — extension (weak, but an extra layer)</span>
+        String original = file.getOriginalFilename();
+        String ext = original != <span class="k">null</span>
+            ? original.substring(original.lastIndexOf(<span class="s">'.'</span>) + <span class="a">1</span>).toLowerCase()
+            : <span class="s">""</span>;
+        <span class="k">if</span> (!ALLOWED_EXTENSIONS.contains(ext)) {
+            <span class="k">throw new</span> <span class="t">ValidationException</span>(<span class="s">"Invalid file extension"</span>);
+        }
+
+        <span class="c">// ④ Security — MIME type from client (still spoofable, still worth checking)</span>
+        <span class="k">if</span> (!ALLOWED_MIME_TYPES.contains(file.getContentType())) {
+            <span class="k">throw new</span> <span class="t">ValidationException</span>(<span class="s">"Invalid content type"</span>);
+        }
+
+        <span class="c">// ⑤ Security — Apache Tika: inspect the actual bytes (ground truth)</span>
+        <span class="k">try</span> {
+            String detected = tika.detect(file.getInputStream());
+            <span class="k">if</span> (!ALLOWED_MIME_TYPES.contains(detected)) {
+                <span class="k">throw new</span> <span class="t">ValidationException</span>(<span class="s">"File content does not match declared type"</span>);
+            }
+        } <span class="k">catch</span> (IOException e) {
+            <span class="k">throw new</span> <span class="t">ValidationException</span>(<span class="s">"Could not inspect file"</span>);
+        }
+    }
+}</pre>
+
+    <!-- Golden rule -->
+    <h2>The golden rule</h2>
+    <p>The biggest lesson from file validation is not about Spring or Tika. It is this:</p>
+
+    <div class="diagram">
+      <div style="text-align:center;font-family:var(--mono);font-size:14px;padding:8px 0">
+        <div style="display:inline-block;text-align:left">
+          <span style="color:var(--text3)">Everything sent by a client is untrusted:</span><br><br>
+          <span class="flow-box red" style="margin:3px 0;display:block">Filename</span>
+          <span class="flow-box red" style="margin:3px 0;display:block">Content-Type header</span>
+          <span class="flow-box red" style="margin:3px 0;display:block">JSON fields</span>
+          <span class="flow-box red" style="margin:3px 0;display:block">Query parameters</span>
+          <span class="flow-box red" style="margin:3px 0;display:block">Cookies</span>
+          <br>
+          <span style="color:var(--text3)">The backend's job is always:</span><br><br>
+          <span class="flow-box accent" style="margin:3px 0;display:block">Receive input</span>
+          <span style="color:var(--text3);margin-left:8px">↓</span><br>
+          <span class="flow-box amber" style="margin:3px 0;display:block">Validate input</span>
+          <span style="color:var(--text3);margin-left:8px">↓</span><br>
+          <span class="flow-box green" style="margin:3px 0;display:block">Process input</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout danger">
+      <div class="callout-icon">🔐</div>
+      <div class="callout-body">
+        <div class="callout-title">Never trust the client</div>
+        <p>File validation exists to ensure correctness, protect system resources, enforce business rules, and defend against untrusted clients who may — accidentally or intentionally — send invalid files. The only thing you can trust is what <em>you</em> verify yourself.</p>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- PAGE: metadata ─────────────────────────────
+       Spring Boot > File Management > Metadata Modelling
+  ─────────────────────────────────────────────── -->
+  <section class="page" id="page-metadata">
+    <div class="breadcrumb"><span>Spring Boot</span><span class="sep">/</span><span>File Management</span></div>
+    <div class="page-title">Metadata Modelling</div>
+    <div class="page-desc">A story — one question after upload changes how you think about data forever</div>
+
+    <!-- Ch 1 -->
+    <h2>Chapter 1 &nbsp;·&nbsp; The first upload</h2>
+    <p>You have finally built your upload endpoint. A user uploads <code>spring-tutorial.mp4</code>. The request reaches your controller. You receive a <code>MultipartFile</code> and successfully store the file. At this point, you feel the problem is solved.</p>
+    <p>Then someone asks: <em>"How will you find this video later?"</em></p>
+    <p>You think: <em>"I'll just read the file."</em></p>
+    <p>Then another question comes: <em>"How will you show all videos uploaded by a specific user?"</em></p>
+    <p>You realise — the file itself doesn't answer those questions. The file only contains video bytes. You need information <strong>about</strong> the video.</p>
+
+    <!-- Ch 2 -->
+    <h2>Chapter 2 &nbsp;·&nbsp; Meeting metadata</h2>
+    <p>Imagine a physical book in a library. The actual book contains pages, text, and images. But the library also maintains a <strong>catalogue card</strong> — it holds the book name, author, shelf location, and published date.</p>
+    <p>The catalogue card is not the book. It is information <em>about</em> the book. This is metadata.</p>
+
+    <div class="compare">
+      <div class="compare-col">
+        <div class="compare-header" style="color:var(--accent);background:rgba(79,156,249,0.07);border-color:var(--border)">Video file — Data</div>
+        <div class="compare-body">
+          <p>Frames, audio, binary bytes</p>
+          <p>The actual content</p>
+          <p>Lives in storage (S3 / Disk / MinIO)</p>
+          <p>You must open it to know anything about it</p>
+        </div>
+      </div>
+      <div class="compare-col">
+        <div class="compare-header pass">Metadata — Data about data</div>
+        <div class="compare-body">
+          <p>Video ID, filename, upload time, owner, size, status</p>
+          <p>Information <em>about</em> the video</p>
+          <p>Lives in the database</p>
+          <p>Enables search, listing, filtering — without opening the file</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ch 3 -->
+    <h2>Chapter 3 &nbsp;·&nbsp; The realization</h2>
+    <p>Suppose a user uploads <code>movie.mp4</code>. The video itself contains frames, audio, and binary bytes. But your application needs to know things like: the video ID, the filename, when it was uploaded, who uploaded it, how large it is, what its current status is, and where it is stored. None of these things are part of the actual video. Yet they are essential for the application.</p>
+
+    <div class="callout warn">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-body">
+        <div class="callout-title">The key insight</div>
+        <p>Video content and video metadata are two completely different things. The video lives in storage. The metadata lives in the database.</p>
+      </div>
+    </div>
+
+    <!-- Ch 4 -->
+    <h2>Chapter 4 &nbsp;·&nbsp; The great separation</h2>
+    <p>A beginner often imagines the database simply stores the video. In reality, most systems keep these two concerns entirely separate.</p>
+
+    <div class="diagram">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+        <div>
+          <div style="color:var(--text3);font-family:var(--mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:12px">Video file</div>
+          <div class="flow-down" style="font-size:12.5px">
+            <span class="flow-box green" style="display:block;text-align:center">movie.mp4</span><br>↓<br>
+            <span class="flow-box green" style="display:block;text-align:center">S3 / MinIO / Disk</span><br>
+            <span style="color:var(--text3);font-size:11px;font-family:var(--mono)">s3://videos/uploads/movie.mp4</span>
+          </div>
+        </div>
+        <div>
+          <div style="color:var(--text3);font-family:var(--mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:12px">Metadata</div>
+          <div class="flow-down" style="font-size:12.5px">
+            <span class="flow-box purple" style="display:block;text-align:center">id · filename · size · uploadedBy · ...</span><br>↓<br>
+            <span class="flow-box purple" style="display:block;text-align:center">Database (PostgreSQL / MySQL)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p>The database does not store the video. It stores <em>information about</em> the video — things like the ID, filename, size, upload date, and uploader. The database row is the catalogue card; the S3 object is the actual book.</p>
+
+    <!-- Ch 5 -->
+    <h2>Chapter 5 &nbsp;·&nbsp; What is metadata modelling?</h2>
+    <p>Once the team starts designing the system, someone asks: <em>"What metadata should we store?"</em> The process of answering that question — deciding which fields to track, why each one exists, and how the model should grow over time — is called <strong>metadata modelling</strong>.</p>
+
+    <div class="callout info">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        <div class="callout-title">Definition</div>
+        <p>Metadata modelling means designing what information about a video should exist in the system — separate from the actual video content.</p>
+      </div>
+    </div>
+
+    <!-- Ch 6 -->
+    <h2>Chapter 6 &nbsp;·&nbsp; Business metadata vs technical metadata</h2>
+    <p>As the model grows, you will notice that metadata naturally splits into two categories.</p>
+
+    <div class="compare">
+      <div class="compare-col">
+        <div class="compare-header" style="color:var(--teal);background:rgba(45,212,191,0.07);border-color:var(--border)">Business metadata</div>
+        <div class="compare-body">
+          <p>Describes how the <strong>business</strong> sees the video. Comes from user input or product requirements.</p>
+          <p>Examples: title, description, visibility (public / private / unlisted), tags, category</p>
+          <p>These fields don't describe the file format — they describe the video's role in the product.</p>
+        </div>
+      </div>
+      <div class="compare-col">
+        <div class="compare-header" style="color:var(--amber);background:rgba(251,191,36,0.07);border-color:var(--border)">Technical metadata</div>
+        <div class="compare-body">
+          <p>Describes the <strong>file itself</strong>. Comes from the file or the processing pipeline.</p>
+          <p>Examples: file size, content type, duration, resolution, codec, frame rate, bitrate</p>
+          <p>These fields describe the actual media — what it is and how it is encoded.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ch 7 -->
+    <h2>Chapter 7 &nbsp;·&nbsp; Upload-time metadata vs generated metadata</h2>
+    <p>An important design distinction — some metadata is available the moment the upload arrives, and some requires inspecting the video file after it has been stored.</p>
+
+    <div class="diagram">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;font-family:var(--mono);font-size:12.5px">
+        <div>
+          <div style="color:var(--text3);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:10px">Known at upload time</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <span class="flow-box accent" style="text-align:center">Filename</span>
+            <span class="flow-box accent" style="text-align:center">Content-Type</span>
+            <span class="flow-box accent" style="text-align:center">File size (bytes)</span>
+            <span class="flow-box accent" style="text-align:center">Upload timestamp</span>
+            <span class="flow-box accent" style="text-align:center">Uploader (userId)</span>
+          </div>
+        </div>
+        <div>
+          <div style="color:var(--text3);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:10px">Generated after processing</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <span class="flow-box purple" style="text-align:center">Duration</span>
+            <span class="flow-box purple" style="text-align:center">Resolution</span>
+            <span class="flow-box purple" style="text-align:center">Codec</span>
+            <span class="flow-box purple" style="text-align:center">Frame rate</span>
+            <span class="flow-box purple" style="text-align:center">Thumbnail URL</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p>To obtain generated metadata, the system must inspect the video after it is stored. The tools commonly used for this are <strong>FFmpeg</strong> and <strong>MediaInfo</strong> — they read duration, resolution, codec, and frame rate from the file and write the results back into your metadata record.</p>
+
+    <!-- Ch 8 -->
+    <h2>Chapter 8 &nbsp;·&nbsp; Why metadata exists — the performance argument</h2>
+    <p>Suppose the product asks: <em>"Show all videos uploaded today."</em></p>
+
+    <div class="compare">
+      <div class="compare-col">
+        <div class="compare-header fail">Without metadata</div>
+        <div class="compare-body">
+          <p>Open every file in storage, inspect each one to determine its upload date, then filter the results. This is extremely expensive and does not scale.</p>
+        </div>
+      </div>
+      <div class="compare-col">
+        <div class="compare-header pass">With metadata</div>
+        <div class="compare-body">
+          <p>Run a single indexed SQL query against the database. Returns results in milliseconds even at millions of rows.</p>
+        </div>
+      </div>
+    </div>
+
+    <p>Metadata enables searching, filtering, sorting, pagination, ownership checks, status tracking, and reporting — all without touching the actual file content.</p>
+
+    <!-- Ch 9 -->
+    <h2>Chapter 9 &nbsp;·&nbsp; Status — metadata about lifecycle</h2>
+    <p>When uploads become asynchronous, the system needs to track where in the pipeline each video currently is. This is also metadata — it describes the <em>state</em> of the video, not its content.</p>
+
+    <div class="diagram">
+      <div class="flow-down">
+        <span class="flow-box accent">User uploads file</span> &nbsp;→&nbsp; <span style="color:var(--accent);font-family:var(--mono);font-size:12px">UPLOADING</span><br>↓<br>
+        <span class="flow-box">File stored in S3</span> &nbsp;→&nbsp; <span style="color:var(--amber);font-family:var(--mono);font-size:12px">PROCESSING</span><br>↓<br>
+        <span class="flow-box purple">FFmpeg extracts duration, resolution, thumbnail</span><br>↓<br>
+        <span class="flow-box green">All done</span> &nbsp;→&nbsp; <span style="color:var(--green);font-family:var(--mono);font-size:12px">READY</span><br>
+        <span class="flow-box red" style="margin-top:8px">Something fails</span> &nbsp;→&nbsp; <span style="color:var(--red);font-family:var(--mono);font-size:12px">FAILED</span>
+      </div>
+    </div>
+
+    <p>The four states — <strong>UPLOADING</strong>, <strong>PROCESSING</strong>, <strong>READY</strong>, and <strong>FAILED</strong> — live as an enum field on the metadata entity. They let the system (and the user) know what stage the video is in without ever touching the file.</p>
+
+    <!-- Ch 10 -->
+    <h2>Chapter 10 &nbsp;·&nbsp; Storage metadata</h2>
+    <p>When the team migrates to S3, the metadata model also needs to record where the file now lives inside the bucket. You need two new fields: the bucket name and the object key (the path within that bucket). This is another form of metadata — it tells the application how to locate the actual file without hardcoding any paths.</p>
+
+    <!-- Ch 11 -->
+    <h2>Chapter 11 &nbsp;·&nbsp; How to think like a system designer</h2>
+    <p>When deciding what to put in your metadata model, ask a single question for every piece of information you might need:</p>
+
+    <div class="callout info">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        <div class="callout-title">The designer's question</div>
+        <p><em>"What information does the application need <strong>without opening the actual file</strong>?"</em><br><br>Every answer to that question is a metadata candidate. Who uploaded it? When? Can users view it? Where is it stored? What is its size? How long is it? If the app needs to know it without reading bytes, it belongs in the database as metadata.</p>
+      </div>
+    </div>
+
+    <!-- Ch 12 — what fields and why -->
+    <h2>Chapter 12 &nbsp;·&nbsp; A practical metadata model — what fields and why</h2>
+    <p>A realistic first version of a video metadata entity would include the following fields, each present for a specific reason:</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Field</th>
+          <th>Why it exists</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><code>id</code></td><td>Uniquely identify the video within the system</td></tr>
+        <tr><td><code>originalFileName</code></td><td>Display to users — the name they gave the file</td></tr>
+        <tr><td><code>title</code></td><td>Business information — what the video is called in the product</td></tr>
+        <tr><td><code>contentType</code></td><td>Technical information — e.g. <code>video/mp4</code></td></tr>
+        <tr><td><code>fileSize</code></td><td>Technical information — in bytes, for display and validation</td></tr>
+        <tr><td><code>storageKey</code></td><td>Locate the file in S3 / storage without hardcoding paths</td></tr>
+        <tr><td><code>uploadedBy</code></td><td>Ownership — which user this video belongs to</td></tr>
+        <tr><td><code>uploadedAt</code></td><td>Auditing and sorting — when the upload happened</td></tr>
+        <tr><td><code>status</code></td><td>Lifecycle tracking — UPLOADING / PROCESSING / READY / FAILED</td></tr>
+      </tbody>
+    </table>
+
+    <!-- Full mental model -->
+    <h2>The complete upload-to-metadata flow</h2>
+    <div class="diagram">
+      <div class="flow-down">
+        <span class="flow-box accent">User uploads video</span><br>↓<br>
+        <span class="flow-box">MultipartFile received and validated</span><br>↓<br>
+        <span class="flow-box purple">File stored in S3 / MinIO / Disk</span><br>↓<br>
+        <span class="flow-box">Video metadata record created in DB</span><br>
+        <span style="font-size:11px;color:var(--text3);font-family:var(--mono)">&nbsp;&nbsp;&nbsp;(filename · size · contentType · uploadedBy · uploadedAt · status = PROCESSING)</span><br>↓<br>
+        <span class="flow-box purple">FFmpeg runs — extracts duration, resolution, codec</span><br>↓<br>
+        <span class="flow-box">DB record updated with technical metadata + status = READY</span><br>↓<br>
+        <span class="flow-box green">Metadata now enables:</span><br>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;font-family:var(--mono);font-size:11.5px">
+          <span class="flow-box" style="font-size:11px">Search</span>
+          <span class="flow-box" style="font-size:11px">Listing</span>
+          <span class="flow-box" style="font-size:11px">Filtering</span>
+          <span class="flow-box" style="font-size:11px">Ownership</span>
+          <span class="flow-box" style="font-size:11px">Status tracking</span>
+          <span class="flow-box" style="font-size:11px">Reporting</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout success">
+      <div class="callout-icon">✅</div>
+      <div class="callout-body">
+        <div class="callout-title">One sentence summary</div>
+        <p>Metadata modelling is the process of deciding what information about a video should be stored and managed separately from the actual video file, so that the system can efficiently search, track, process, and manage videos without repeatedly opening the video content itself.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAGE: dto-validation ───────────────────────
+       Spring Boot > REST APIs > DTO Validation
+  ─────────────────────────────────────────────── -->
+  <section class="page" id="page-dto-validation">
+    <div class="breadcrumb"><span>Spring Boot</span><span class="sep">/</span><span>REST APIs</span></div>
+    <div class="page-title">DTO Validation</div>
+    <div class="page-desc">Bean Validation in Spring Boot — verifying incoming data before it enters the application</div>
+
+    <!-- Why it exists -->
+    <h2>Why validation exists</h2>
+    <p>Once you have a working API endpoint that accepts a <code>@RequestBody</code> DTO, that DTO will accept <em>anything</em> by default — empty strings, nulls, negative numbers, invalid emails. Without validation, your database silently fills with garbage data.</p>
+
+    <div class="compare">
+      <div class="compare-col">
+        <div class="compare-header fail">Without validation</div>
+        <div class="compare-body">
+          <p>Title = <code>""</code>, <code>null</code>, or <code>"&nbsp;&nbsp;&nbsp;"</code> all get saved to the database</p>
+          <p>Duration = <code>-500</code> is accepted without complaint</p>
+          <p>Business logic runs on data it should never have seen</p>
+        </div>
+      </div>
+      <div class="compare-col">
+        <div class="compare-header pass">With validation</div>
+        <div class="compare-body">
+          <p>Invalid requests are rejected at the controller boundary with <code>400 Bad Request</code></p>
+          <p>The service layer only ever receives clean, rule-conforming data</p>
+          <p>Rules live on the DTO itself — no scattered <code>if-null</code> checks</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout warn">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-body">
+        <div class="callout-title">Clients are untrusted</div>
+        <p>Just as users can upload invalid files, they can also send <code>&#123;"title": "", "duration": -500&#125;</code>. The backend must always validate what it receives — never assume the client sent something correct.</p>
+      </div>
+    </div>
+
+    <!-- The two gates -->
+    <h2>The two gates</h2>
+    <p>A video upload request carries two payloads — a file and a metadata DTO. Each has its own validation gate. Both must pass before the request proceeds.</p>
+
+    <div class="diagram">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+        <div>
+          <div style="color:var(--text3);font-family:var(--mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:12px">Gate 1 — DTO Validation</div>
+          <div style="display:flex;flex-direction:column;gap:8px;font-family:var(--mono);font-size:12px">
+            <span class="flow-box accent" style="text-align:center">Title present?</span>
+            <span class="flow-box accent" style="text-align:center">Visibility provided?</span>
+            <span class="flow-box accent" style="text-align:center">Description length valid?</span>
+            <span class="flow-box accent" style="text-align:center">Duration positive?</span>
+          </div>
+        </div>
+        <div>
+          <div style="color:var(--text3);font-family:var(--mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:12px">Gate 2 — File Validation</div>
+          <div style="display:flex;flex-direction:column;gap:8px;font-family:var(--mono);font-size:12px">
+            <span class="flow-box purple" style="text-align:center">File present?</span>
+            <span class="flow-box purple" style="text-align:center">Correct MIME type?</span>
+            <span class="flow-box purple" style="text-align:center">Size within limit?</span>
+            <span class="flow-box purple" style="text-align:center">Content actually valid?</span>
+          </div>
+        </div>
+      </div>
+      <div class="flow-down" style="margin-top:20px;text-align:center">
+        <span class="flow-box green">Both gates pass</span><br>↓<br>
+        <span class="flow-box">Controller → Service → Storage</span>
+      </div>
+    </div>
+
+    <!-- How to enable it -->
+    <h2>How Bean Validation works in Spring</h2>
+    <p>Spring integrates with the Jakarta Bean Validation API. Instead of writing manual null checks everywhere, you declare rules directly on DTO fields using annotations. Then you add a single <code>@Valid</code> on the controller parameter to tell Spring to enforce those rules before the method body runs.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <strong>Annotate the DTO fields with constraint rules</strong>
+          <pre style="margin-top:8px"><span class="k">public class</span> <span class="t">CreateVideoRequest</span> {
+
+    <span class="k">@NotBlank</span>
+    <span class="k">@Size</span>(max = 100)
+    <span class="k">private</span> String title;
+
+    <span class="k">@Size</span>(max = 500)
+    <span class="k">private</span> String description;
+
+    <span class="k">@Positive</span>
+    <span class="k">private</span> Integer duration;
+}</pre>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <strong>Add <code>@Valid</code> on the controller parameter — this is what triggers validation</strong>
+          <pre style="margin-top:8px"><span class="k">@PostMapping</span>
+<span class="k">public void</span> createVideo(
+        <span class="k">@RequestBody</span> <span class="k">@Valid</span> <span class="t">CreateVideoRequest</span> request) {
+
+    videoService.create(request);
+}</pre>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <strong>Spring throws <code>MethodArgumentNotValidException</code> automatically if any constraint fails</strong>
+          <p style="margin-top:6px;font-size:13.5px">The request never reaches the service layer. Spring returns <code>400 Bad Request</code> before your business logic runs.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- The critical @Valid reminder -->
+    <div class="callout danger">
+      <div class="callout-icon">🚨</div>
+      <div class="callout-body">
+        <div class="callout-title">The most common mistake — forgetting @Valid</div>
+        <p>You can annotate every field perfectly with <code>@NotBlank</code>, <code>@Size</code>, and <code>@Positive</code>, and validation will <strong>silently do nothing</strong> if <code>@Valid</code> is missing from the controller parameter. The annotations alone are just metadata — <code>@Valid</code> is the trigger that tells Spring to actually run the checks.</p>
+      </div>
+    </div>
+
+    <!-- The flow diagram -->
+    <h2>Request flow — with vs without @Valid</h2>
+
+    <div class="diagram">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+        <div>
+          <div style="color:var(--red);font-family:var(--mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:12px">Without @Valid</div>
+          <div class="flow-down" style="font-size:12.5px">
+            <span class="flow-box accent">HTTP Request arrives</span><br>↓<br>
+            <span class="flow-box">DTO object created</span><br>↓<br>
+            <span class="flow-box red">Controller executes immediately</span><br>↓<br>
+            <span class="flow-box red">Invalid data reaches service</span>
+          </div>
+        </div>
+        <div>
+          <div style="color:var(--green);font-family:var(--mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:12px">With @Valid</div>
+          <div class="flow-down" style="font-size:12.5px">
+            <span class="flow-box accent">HTTP Request arrives</span><br>↓<br>
+            <span class="flow-box">DTO object created</span><br>↓<br>
+            <span class="flow-box purple">Bean Validation runs</span><br>
+            <span style="color:var(--text3);font-family:var(--mono);font-size:11px">&nbsp;&nbsp;@NotBlank · @Size · @Positive · ...</span><br>↓<br>
+            <span class="flow-box red" style="font-size:11.5px">Fail → 400 Bad Request (never reaches service)</span><br>↓<br>
+            <span class="flow-box green">Pass → Controller executes</span><br>↓<br>
+            <span class="flow-box green">Clean data enters service layer</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- The three siblings -->
+    <h2>@NotNull vs @NotEmpty vs @NotBlank</h2>
+    <p>These three annotations look similar but catch different levels of "bad" input. For user-entered strings, <code>@NotBlank</code> is almost always what you want.</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Annotation</th>
+          <th>Rejects</th>
+          <th>Accepts</th>
+          <th>Use when</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>@NotNull</code></td>
+          <td><code>null</code></td>
+          <td><code>""</code> &nbsp; <code>"&nbsp;&nbsp;&nbsp;"</code></td>
+          <td>Field must be present but can be empty (e.g. an object reference)</td>
+        </tr>
+        <tr>
+          <td><code>@NotEmpty</code></td>
+          <td><code>null</code> &nbsp; <code>""</code></td>
+          <td><code>"&nbsp;&nbsp;&nbsp;"</code></td>
+          <td>At least one character is required (spaces count)</td>
+        </tr>
+        <tr>
+          <td><code>@NotBlank</code></td>
+          <td><code>null</code> &nbsp; <code>""</code> &nbsp; <code>"&nbsp;&nbsp;&nbsp;"</code></td>
+          <td><code>"Spring Tutorial"</code></td>
+          <td>Actual meaningful text required — best choice for user-entered strings</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Nested DTOs -->
+    <h2>Validating nested DTOs</h2>
+    <p>When your DTO contains another DTO as a field, adding <code>@Valid</code> on the controller alone is not enough. The nested object also needs <code>@Valid</code> on its field declaration, otherwise Spring will not descend into it.</p>
+
+    <div class="compare">
+      <div class="compare-col">
+        <div class="compare-header fail">Broken — nested DTO not validated</div>
+        <div class="compare-body">
+          <pre style="margin:0;border:none;padding:0;background:transparent;font-size:12px"><span class="k">public class</span> <span class="t">CreateVideoRequest</span> {
+
+    <span class="c">// @Valid missing here!</span>
+    <span class="k">private</span> <span class="t">OwnerRequest</span> owner;
+}</pre>
+        </div>
+      </div>
+      <div class="compare-col">
+        <div class="compare-header pass">Correct — @Valid on the nested field</div>
+        <div class="compare-body">
+          <pre style="margin:0;border:none;padding:0;background:transparent;font-size:12px"><span class="k">public class</span> <span class="t">CreateVideoRequest</span> {
+
+    <span class="k">@Valid</span>
+    <span class="k">private</span> <span class="t">OwnerRequest</span> owner;
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cheat sheet -->
+    <h2>Common annotation cheat sheet</h2>
+
+    <table>
+      <thead>
+        <tr><th>Annotation</th><th>Purpose</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>@NotNull</code></td><td>Value must not be null</td></tr>
+        <tr><td><code>@NotEmpty</code></td><td>Value must not be null or empty string / collection</td></tr>
+        <tr><td><code>@NotBlank</code></td><td>Value must contain at least one non-whitespace character</td></tr>
+        <tr><td><code>@Size(min, max)</code></td><td>String length or collection size must be within the given range</td></tr>
+        <tr><td><code>@Min(n)</code></td><td>Numeric value must be ≥ n</td></tr>
+        <tr><td><code>@Max(n)</code></td><td>Numeric value must be ≤ n</td></tr>
+        <tr><td><code>@Positive</code></td><td>Numeric value must be &gt; 0</td></tr>
+        <tr><td><code>@PositiveOrZero</code></td><td>Numeric value must be ≥ 0</td></tr>
+        <tr><td><code>@Email</code></td><td>String must match a valid email address format</td></tr>
+        <tr><td><code>@Valid</code></td><td>Triggers validation — required on controller params and nested DTO fields</td></tr>
+      </tbody>
+    </table>
+
+    <!-- Final mental model -->
+    <h2>The complete validation flow</h2>
+    <div class="diagram">
+      <div class="flow-down">
+        <span class="flow-box accent">Client sends HTTP request with JSON body</span><br>↓<br>
+        <span class="flow-box">Spring deserializes JSON → DTO object created</span><br>↓<br>
+        <span class="flow-box purple">@Valid triggers Bean Validation</span><br>
+        <span style="font-size:11px;color:var(--text3);font-family:var(--mono)">&nbsp;&nbsp;&nbsp;checks every annotated field: @NotBlank · @Size · @Positive · @Email · ...</span><br>↓<br>
+        <span class="flow-box red">Any violation → MethodArgumentNotValidException → 400 Bad Request</span><br>↓<br>
+        <span class="flow-box green">All constraints pass → controller method body executes</span><br>↓<br>
+        <span class="flow-box green">Clean, validated data enters the service layer</span>
+      </div>
+    </div>
+
+    <div class="callout success">
+      <div class="callout-icon">✅</div>
+      <div class="callout-body">
+        <div class="callout-title">One sentence summary</div>
+        <p>DTO validation is the process of verifying that incoming business data satisfies predefined rules before it enters the application, using Bean Validation annotations on DTO fields and the <code>@Valid</code> trigger on the controller parameter.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAGE: placeholder ──────────────────────────
+       Shown for all "coming soon" nav items
+  ─────────────────────────────────────────────── -->
+  <section class="page" id="page-placeholder">
+    <div class="breadcrumb" id="ph-breadcrumb"><span>—</span></div>
+    <div class="page-title" style="color:var(--text3)">Coming soon</div>
+    <div class="page-desc">This section hasn't been written yet.</div>
+    <div class="callout info">
+      <div class="callout-icon">📝</div>
+      <div class="callout-body">
+        <div class="callout-title">Add notes here</div>
+        <p>Ask Claude to write notes for this topic and they'll be added directly to this file.</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+<!-- END REGION: MAIN CONTENT ================================= -->
+
+<!-- ================================================================
+  REGION: JAVASCRIPT
+  DO NOT TOUCH unless changing sidebar toggle or nav behaviour.
+  Functions:
+    toggleDomain(id) — expand/collapse a top-level domain
+    toggleCat(id)    — expand/collapse a category inside a domain
+    nav(pageId, domain, category) — show a page, highlight nav item
+================================================================ -->
+<script>
+  function toggleDomain(id) {
+    const el  = document.getElementById(id);
+    const hdr = el.querySelector('.domain-header');
+    const bod = el.querySelector('.domain-body');
+    hdr.classList.toggle('open');
+    bod.classList.toggle('open');
+  }
+
+  function toggleCat(id) {
+    const el  = document.getElementById(id);
+    const hdr = el.querySelector('.cat-header');
+    const bod = el.querySelector('.cat-body');
+    hdr.classList.toggle('open');
+    bod.classList.toggle('open');
+  }
+
+  function nav(pageId, domain, category) {
+    // show page
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    const target = document.getElementById('page-' + pageId);
+    if (target) target.classList.add('active');
+
+    // update breadcrumb on placeholder
+    if (pageId === 'placeholder' && domain) {
+      const bc = document.getElementById('ph-breadcrumb');
+      if (bc) bc.innerHTML = '<span>' + domain + '</span><span class="sep">/</span><span>' + category + '</span>';
+    }
+
+    // highlight nav item
+    document.querySelectorAll('.nav-item').forEach(btn => {
+      btn.classList.remove('active');
+      const oc = btn.getAttribute('onclick') || '';
+      if (oc.includes("nav('" + pageId + "','" + domain + "','" + category + "')")) {
+        btn.classList.add('active');
+        // auto-open ancestor domain + category
+        const catBody = btn.closest('.cat-body');
+        if (catBody && !catBody.classList.contains('open')) {
+          catBody.classList.add('open');
+          catBody.previousElementSibling.classList.add('open');
+        }
+        const domBody = btn.closest('.domain-body');
+        if (domBody && !domBody.classList.contains('open')) {
+          domBody.classList.add('open');
+          domBody.previousElementSibling.classList.add('open');
+        }
+      }
+    });
+
+    document.querySelector('.main').scrollTop = 0;
+  }
+</script>
+<!-- END REGION: JAVASCRIPT =================================== -->
+</body>
+</html>
