@@ -2,7 +2,7 @@ package org.example.services;
 
 import lombok.RequiredArgsConstructor;
 import org.example.Exception.AuthException;
-import org.example.dtos.RefreshTokenPayloadDTO;
+import org.example.dtos.AuthenticationDTO.RefreshTokenPayloadDTO;
 import org.example.entities.RefreshToken;
 import org.example.repositories.RefreshTokenRepository;
 import org.springframework.beans.factory.annotation.Value;

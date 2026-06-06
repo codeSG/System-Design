@@ -1,7 +1,7 @@
 package org.example.services;
 
 import io.jsonwebtoken.security.Keys;
-import org.example.dtos.AccessTokenPayloadDTO;
+import org.example.dtos.AuthenticationDTO.AccessTokenPayloadDTO;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import io.jsonwebtoken.Jwts;
