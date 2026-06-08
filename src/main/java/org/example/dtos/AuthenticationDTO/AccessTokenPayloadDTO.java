@@ -1,4 +1,4 @@
-package org.example.dtos;
+package org.example.dtos.AuthenticationDTO;
 
 public record AccessTokenPayloadDTO(
     Long userId,

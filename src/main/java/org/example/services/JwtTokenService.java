@@ -1,7 +1,8 @@
 package org.example.services;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.security.Keys;
-import org.example.dtos.AccessTokenPayloadDTO;
+import org.example.dtos.AuthenticationDTO.AccessTokenPayloadDTO;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import io.jsonwebtoken.Jwts;
@@ -14,7 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Service
-public class JWTTokenService {
+public class JwtTokenService {
     @Value("${jwt.secret}")
     private String secret;
 
@@ -48,7 +49,7 @@ public class JWTTokenService {
                 .compact();
     }
 
-    public boolean validateToken(String token){
+    public boolean validateAccessToken(String token){
         try {
             Jwts.parser()
                     .verifyWith(getSigningKey())
@@ -58,5 +59,24 @@ public class JWTTokenService {
         } catch (Exception e){
             return false;
         }
+    }
+
+    public Long extractUserId(String token) {
+        Claims claims = Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+
+        return claims.get("userId", Long.class);
+    }
+
+    public String extractSubject(String token) {
+        return Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .getSubject();
     }
 }

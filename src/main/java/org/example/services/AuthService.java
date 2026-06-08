@@ -2,20 +2,17 @@ package org.example.services;
 
 import lombok.RequiredArgsConstructor;
 import org.example.Exception.AuthException;
-import org.example.dtos.RefreshTokenPayloadDTO;
-import org.example.dtos.SignupRequestDTO;
-import org.example.dtos.SignupResponseDTO;
-import org.example.dtos.AccessTokenPayloadDTO;
+import org.example.dtos.AuthenticationDTO.RefreshTokenPayloadDTO;
+import org.example.dtos.AuthenticationDTO.SignupRequestDTO;
+import org.example.dtos.AuthenticationDTO.SignupResponseDTO;
+import org.example.dtos.AuthenticationDTO.AccessTokenPayloadDTO;
 import org.example.entities.RefreshToken;
 import org.example.entities.User;
-import org.example.repositories.RefreshTokenRepository;
 import org.example.repositories.UserRepository;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.time.Instant;
 
 @Service
 @RequiredArgsConstructor

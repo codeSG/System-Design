@@ -1,4 +1,4 @@
-package org.example.dtos;
+package org.example.dtos.AuthenticationDTO;
 
 import org.example.entities.User;
 

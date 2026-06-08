@@ -12,7 +12,6 @@ import java.util.UUID;
 @Table(name="refresh_token" , indexes = {
   @Index(name="idx_token" , columnList = "token" , unique = true),
         @Index(name = "idx_userId" , columnList = "userId"),
-        @Index(name="ix_family",columnList = "family")
 })
 @Getter
 @Setter
@@ -45,7 +44,7 @@ public class RefreshToken {
 
     private String userIp;
 
-    //cosntructor
+    //constructor
     public RefreshToken(User user, String token, Instant expiresAt) {
         this.user = user;
         this.token = token;
